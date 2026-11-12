@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">KeyBox</string>
+    <string name="quickfill_desc">在登录界面自动列出 KeyBox 中保存的账号，点选并通过验证后填充。</string>
+</resources>
