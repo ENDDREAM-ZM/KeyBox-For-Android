@@ -8,5 +8,5 @@ dependencyResolutionManagement {
         google(); mavenCentral()
     }
 }
-rootProject.name = "KeyBox"
+rootProject.name = "KeyBox For Android"
 include ':app'
