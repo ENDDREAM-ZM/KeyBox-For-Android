@@ -1,8 +1,9 @@
-# KeyBox
+# KeyBox For Android
 
 不联网的本地密码管理器，所有数据只在本机保存。网络权限仅用于获取一言和图标，与本地密码库无关。
 
 - 平台：Android（minSdk 28 ～ targetSdk 37）
+- 包名：`com.enddream.keybox`
 - 界面：Jetpack Compose，两套皮肤 Material 3 / Miuix
 - 语言：Kotlin + Java
 
