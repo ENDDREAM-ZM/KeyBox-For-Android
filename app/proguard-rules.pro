@@ -1,0 +1,2 @@
+-keep class com.enddream.keybox.core.** { *; }
+-dontwarn **
