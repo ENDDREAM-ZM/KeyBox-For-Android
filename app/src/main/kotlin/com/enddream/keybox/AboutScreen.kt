@@ -88,8 +88,7 @@ fun AboutScreen(onClose: () -> Unit) {
                 )
                 Spacer(Modifier.height(6.dp))
                 KText(
-                    "密码库由主密码加密，Android 与 Windows 通用。" +
-                            "Windows 端暂未进行开发，敬请期待。",
+                    "密码库由主密码加密。",
                     txt = Txt.Body2,
                     color = secondaryColor()
                 )
