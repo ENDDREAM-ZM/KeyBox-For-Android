@@ -45,4 +45,4 @@ Signing is read from `keystore.properties`. Without that file the build produces
 
 ## License
 
-[MIT](LICENSE)
+[Apache-2.0](LICENSE)
