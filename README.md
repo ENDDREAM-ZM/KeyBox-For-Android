@@ -1,44 +1,48 @@
+<p align="center">
+  <a href="https://github.com/ENDDREAM-ZM/KeyBox-For-Android/releases/latest"><img src="https://img.shields.io/github/v/release/ENDDREAM-ZM/KeyBox-For-Android?color=orange&label=download" alt="Download" /></a>
+  <a href="https://github.com/ENDDREAM-ZM/KeyBox-For-Android/releases"><img src="https://shields.io/github/downloads/ENDDREAM-ZM/KeyBox-For-Android/total?label=downloads&color=yellow" alt="Downloads" /></a>
+</p>
+
+---
+
 # KeyBox For Android
 
-[![Download](https://img.shields.io/github/v/release/ENDDREAM-ZM/KeyBox-For-Android?color=orange&label=Download)](https://github.com/ENDDREAM-ZM/KeyBox-For-Android/releases/latest) [![Total](https://shields.io/github/downloads/ENDDREAM-ZM/KeyBox-For-Android/total?label=Counts&color=yellow)](https://github.com/ENDDREAM-ZM/KeyBox-For-Android/releases)
+**English** | [中文](README.zh-CN.md)
 
-## Introduction
+An offline password manager for Android. All data stays on your device.
 
-本地密码管理器，不联网。数据只在本机，网络权限只用来取一言和图标。
+## Features
 
-条目、分类、回收站、密码生成、动态令牌、自动填充、快速填充、指纹解锁。
-
-## Supported Versions
-
-Android 9 ~ 17
-
-## Install
-
-下载 APK 安装。
-
-## Download
-
-- [Github Releases](https://github.com/ENDDREAM-ZM/KeyBox-For-Android/releases/latest)
+- Entries: title, username, password, URL, package name, category, tags, note, favorite
+- Search, category filter, multi-select
+- Trash with configurable retention
+- Password and username generator
+- TOTP, added by QR scan or manually
+- Autofill service and accessibility quick fill
+- Biometric unlock, clipboard auto-clear, screenshot blocking
+- Site icons fetched from multiple sources, shared per domain
 
 ## Security
 
-`vault.pmv` 始终加密。PBKDF2-SHA256 迭代 60 万次派生密钥，AES-256-CTR、AES-256-GCM、ChaCha20-Poly1305 三层加密加外层 HMAC。没设主密码时用 Android Keystore 里的设备密钥，设了就用主密码。
+`vault.pmv` is always encrypted. The key is derived with PBKDF2-SHA256 at 600000 iterations, then the payload goes through AES-256-CTR, AES-256-GCM and ChaCha20-Poly1305, with an outer HMAC.
+
+Without a master password the vault is encrypted with a key held in the Android Keystore. Setting a master password switches the key to the password.
 
 ## Build
 
-```
+```sh
 ./gradlew :app:assembleRelease
 ```
 
-签名配置放 `keystore.properties`，没有这个文件就出未签名包。
+Signing is read from `keystore.properties`. Without that file the build produces an unsigned APK.
 
 ## Credits
 
-- [Jetpack Compose](https://developer.android.com/jetpack/compose): 界面
-- [Miuix](https://github.com/miuix-kotlin-multiplatform/miuix): Miuix 皮肤
-- [Haze](https://github.com/chrisbanes/haze): 顶栏底栏模糊
-- [CameraX](https://developer.android.com/media/camera/camerax): 扫码
+- [Jetpack Compose](https://developer.android.com/jetpack/compose): UI
+- [Miuix](https://github.com/miuix-kotlin-multiplatform/miuix): Miuix skin
+- [Haze](https://github.com/chrisbanes/haze): top and bottom bar blur
+- [CameraX](https://developer.android.com/media/camera/camerax): QR scanning
 
 ## License
 
-MIT
+[MIT](LICENSE)
