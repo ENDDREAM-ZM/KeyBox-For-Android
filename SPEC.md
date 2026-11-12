@@ -1,7 +1,6 @@
 # KeyBox 数据格式规范 v4
 
-本文件是 Windows 版（KeyBox.exe，C 实现）与 Android 版（KeyBox.apk，Java 实现）之间唯一的互通契约。
-两端各自独立实现同一份规范，因此同一个 `vault.pmv` / 导出文件可以在两端互相打开。
+本文件说明 KeyBox For Android 的本地库文件与导出文件的二进制格式。
 
 ---
 
@@ -33,28 +32,9 @@
   2. `L2 = AES-256-GCM(kAes, nonce2, AAD, L1)`
   3. `L3 = ChaCha20-Poly1305(kCha, nonce3, AAD, L2)`
   4. `MAC = HMAC-SHA256(kMac, AAD ‖ L3)`
-* 读取兼容 v3（`layers` 含 `whiten`）：旧格式按原三层流程解开，保存时自动升级为 v4。
-* 默认迭代次数 600000（v3 文件保留各自头里的 iter）。
-* v3 密钥：PBKDF2-HMAC-SHA256(主密码 UTF-8, salt, iter=300000) → 128 字节，切为四把独立密钥：
-  `kWhite[0..31]`、`kAes[32..63]`、`kCha[64..95]`、`kMac[96..127]`（仅用于读取旧文件）。
-* 加密流水线（四层）：
-  1. 白化：`W = P XOR KS(kWhite, nonce)`，KS 由 HMAC-SHA256(kWhite, nonce‖ctr_be32‖"KBX\x01") 逐块生成（自研）
-  2. `C1 = AES-256-GCM(kAes, nonce2, AAD, W)`，输出 ct1‖tag16
-  3. `C2 = ChaCha20-Poly1305(kCha, nonce2, AAD, C1)`，输出 ct2‖tag16（RFC 8439）
-  4. `MAC = HMAC-SHA256(kMac, AAD ‖ C2)`
 * body = `C2 ‖ MAC(32)`；解密顺序相反，先验 MAC 再逐层解。
 * AAD = `magic || hdrLen || header`（改头部任何字节都会解密失败）。
 * 每次保存都重新生成 salt 与 nonce。
-
-## 1b. 明文主库（未设置主密码时，Android 端使用）
-
-```
-magic "KEYBOXP1" (8) | hdrLen (4,BE) | {"ver":2,"enc":"none","app":"KeyBox"} | 明文 payload
-```
-
-* 仅当用户**主动不设置主密码**时，Android 端才用这种容器保存；界面会常驻提醒。
-* Windows 端可直接打开 / 导入该文件（会提示该库未加密）。
-* 用户随时可在「设置 → 主密码」里补设主密码，届时整库转为加密容器 `KEYBOX`。
 
 ## 2. 明文负载（payload）
 
@@ -172,13 +152,12 @@ header：
   * 条目有 `id` 且本地存在同 `id` → 取 `utime` 更新的一方；否则按 `(title, username)` 匹配，匹配不上则新增。
 * CSV 表头兼容常见别名：`name/title/标题`、`login/username/user/用户名`、`password/pass/密码`、`url/website/网址`、`note/notes/备注`、`category/folder/分类`、`tags/标签`、`favorite/收藏`。
 
-## 4. 本机设置（不进库、不参与互通）
+## 4. 本机设置（不进库）
 
 迭代次数、自动锁定时间（5/15/30 分钟，默认 5）、在线获取图标开关（默认开）、
-回收站保留天数（7/14/30，默认 7）、用户名生成器偏好、生物识别开关（仅 Android）。
+回收站保留天数（7/14/30，默认 7）、用户名生成器偏好、生物识别开关。
 
-## 5. 自研说明
+## 5. 实现说明
 
-SHA-256 / HMAC / PBKDF2 / AES-256 / GHASH / GCM、base64、JSON 解析与序列化、CSV 读写、
-保险库与导出容器、密码与用户名生成器、强度评估、界面与交互全部为本项目从零实现。
-Java 端仅调用平台自带 `javax.crypto`（AES-GCM）与 `javax.crypto.Mac`（HMAC）。
+密码学原语调用平台自带的 `javax.crypto`（AES-GCM、ChaCha20-Poly1305、HMAC、PBKDF2）。
+容器封装、JSON 序列化、CSV 读写、base64 编解码在 `core/` 目录下。
