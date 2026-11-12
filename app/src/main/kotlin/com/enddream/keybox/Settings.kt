@@ -743,7 +743,7 @@ fun ExportDialog(
         onDismiss = onClose,
         content = {
             listOf(
-                "KeyBox（自有格式，仅限 Android/Windows 客户端）",
+                "KeyBox（自有格式）",
                 "JSON（兼容 Bitwarden 等）",
                 "CSV（兼容 Chrome / LastPass / KeePass 等）"
             ).forEachIndexed { i, s ->
