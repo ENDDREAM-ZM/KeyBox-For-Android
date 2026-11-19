@@ -15,6 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Build
 import androidx.compose.material.icons.rounded.Code
+import androidx.compose.material.icons.rounded.Link
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -86,11 +87,15 @@ fun AboutScreen(onClose: () -> Unit) {
                             "网络权限仅用于获取一言和图标，与本地密码库无关。",
                     txt = Txt.Body2
                 )
-                Spacer(Modifier.height(6.dp))
-                KText(
-                    "密码库由主密码加密。",
-                    txt = Txt.Body2,
-                    color = secondaryColor()
+            }
+
+            KSection("项目地址")
+            KCard(padding = 0.dp) {
+                KRow(
+                    title = "GitHub",
+                    subtitle = "https://github.com/ENDDREAM-ZM/KeyBox-For-Android",
+                    icon = Icons.Rounded.Link,
+                    onClick = { open("https://github.com/ENDDREAM-ZM/KeyBox-For-Android") }
                 )
             }
 
@@ -108,13 +113,12 @@ fun AboutScreen(onClose: () -> Unit) {
                 }
             }
 
-            KSection("致谢")
+            KSection("开放源代码许可")
             KCard(padding = 0.dp) {
                 libs.forEachIndexed { i, lib ->
                     KRow(
                         title = lib.name,
-                        subtitle = "${lib.license} · ${lib.note}",
-                        value = lib.version,
+                        subtitle = lib.license,
                         icon = Icons.Rounded.Code,
                         onClick = { open(lib.url) }
                     )
