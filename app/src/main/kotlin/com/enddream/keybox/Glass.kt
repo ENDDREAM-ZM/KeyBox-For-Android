@@ -137,20 +137,20 @@ fun Modifier.liquidGlassBar(shape: Shape, tint: Color, backdrop: LayerBackdrop?)
 fun GlassWallpaper(modifier: Modifier = Modifier) {
     val dark = glassDark()
     val base = if (dark) {
-        Brush.verticalGradient(listOf(Color(0xFF2A2A2F), Color(0xFF08080A)))
+        Brush.verticalGradient(listOf(Color(0xFF2A2A2A), Color(0xFF0F0F0F)))
     } else {
-        Brush.verticalGradient(listOf(Color(0xFFFFFFFF), Color(0xFFC9C9D2)))
+        Brush.verticalGradient(listOf(Color(0xFFFFFFFF), Color(0xFFC9C9C9)))
     }
     val blobs = if (dark) listOf(
-        Triple(0.08f, 0.04f, Color.White.copy(alpha = 0.13f)),
-        Triple(0.95f, 0.20f, Color.White.copy(alpha = 0.09f)),
-        Triple(0.30f, 0.58f, Color.White.copy(alpha = 0.06f)),
+        Triple(0.08f, 0.04f, Color.White.copy(alpha = 0.12f)),
+        Triple(0.95f, 0.20f, Color.White.copy(alpha = 0.08f)),
+        Triple(0.30f, 0.58f, Color.White.copy(alpha = 0.05f)),
         Triple(0.85f, 0.96f, Color.Black.copy(alpha = 0.45f))
     ) else listOf(
         Triple(0.08f, 0.04f, Color.White),
-        Triple(0.95f, 0.20f, Color(0xFFEDEDF1)),
-        Triple(0.30f, 0.58f, Color(0xFFF8F8FA)),
-        Triple(0.85f, 0.96f, Color(0xFFB2B2BD))
+        Triple(0.95f, 0.20f, Color(0xFFEDEDED)),
+        Triple(0.30f, 0.58f, Color(0xFFF8F8F8)),
+        Triple(0.85f, 0.96f, Color(0xFFB2B2B2))
     )
     Box(
         modifier
