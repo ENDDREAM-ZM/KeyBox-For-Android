@@ -9,14 +9,14 @@ object Prefs {
 
     fun lockMinutes(c: Context): Int {
         val v = get(c).getInt("lock_min", 5)
-        return if (v == 15 || v == 30) v else 5
+        return if (v == 1 || v == 2 || v == 5 || v == 15 || v == 30) v else 5
     }
 
     fun setLockMinutes(c: Context, v: Int) = get(c).edit().putInt("lock_min", v).apply()
 
     fun retentionDays(c: Context): Int {
         val v = get(c).getInt("retention_days", 7)
-        return if (v == 15 || v == 30) v else 7
+        return if (v == 1 || v == 2 || v == 3 || v == 7 || v == 15 || v == 30) v else 7
     }
 
     fun setRetentionDays(c: Context, v: Int) = get(c).edit().putInt("retention_days", v).apply()
