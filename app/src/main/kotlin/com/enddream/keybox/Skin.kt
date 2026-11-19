@@ -212,7 +212,21 @@ fun KCard(
 
 @Composable
 fun KSection(text: String, modifier: Modifier = Modifier) {
-    if (isMiuix()) {
+    if (isGlass()) {
+        Row(
+            modifier
+                .padding(start = 4.dp, top = 14.dp, bottom = 5.dp)
+                .liquidGlass(RoundedCornerShape(50), glassThin())
+                .padding(horizontal = 10.dp, vertical = 3.dp)
+        ) {
+            Text(
+                text,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontFamily = FontFamily.Default
+            )
+        }
+    } else if (isMiuix()) {
         MxSmallTitle(
             text = text,
             modifier = modifier.padding(start = 4.dp, top = 14.dp, bottom = 5.dp)
