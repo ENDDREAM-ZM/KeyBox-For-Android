@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
@@ -224,12 +226,31 @@ fun LiquidScaffold(
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
                     .onSizeChanged { topPx = it.height }
-                    .liquidGlassBar(RoundedCornerShape(0.dp), glassSurfaceStrong(), contentLayer)
+                    .then(
+                        if (ChromeState.floatingTop) Modifier
+                            .padding(start = 12.dp, end = 12.dp, top = 8.dp)
+                            .statusBarsPadding()
+                        else Modifier
+                    )
+                    .then(
+                        if (ChromeState.floatingTop) Modifier.border(
+                            1.dp,
+                            Color.White.copy(alpha = if (glassDark()) 0.16f else 0.60f),
+                            RoundedCornerShape(26.dp)
+                        ) else Modifier
+                    )
+                    .liquidGlassBar(
+                        if (ChromeState.floatingTop) RoundedCornerShape(26.dp) else RectangleShape,
+                        glassSurfaceStrong(),
+                        contentLayer
+                    )
             ) {
-                Column {
-                    topBar()
-                    if (BannerState.visible) MasterBannerStrip()
-                    topContent()
+                Box(Modifier.consumeWindowInsets(WindowInsets.statusBars)) {
+                    Column {
+                        topBar()
+                        if (BannerState.visible) MasterBannerStrip()
+                        topContent()
+                    }
                 }
             }
             Box(
