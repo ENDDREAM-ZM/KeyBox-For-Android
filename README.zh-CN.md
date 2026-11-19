@@ -21,6 +21,7 @@
 - 自动填充服务与无障碍快速填充
 - 指纹解锁、剪贴板定时清除、禁止截图
 - 站点图标多源获取，同域名共用
+- 三套材质：Material 3、Miuix、液态玻璃
 
 ## 安全
 
@@ -41,6 +42,7 @@
 - [Jetpack Compose](https://developer.android.com/jetpack/compose)：界面
 - [Miuix](https://github.com/miuix-kotlin-multiplatform/miuix)：Miuix 皮肤
 - [Haze](https://github.com/chrisbanes/haze)：顶栏底栏模糊
+- [Backdrop](https://github.com/Kyant0/AndroidLiquidGlass)：液态玻璃材质
 - [CameraX](https://developer.android.com/media/camera/camerax)：扫码
 
 ## 许可
