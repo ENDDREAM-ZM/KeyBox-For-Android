@@ -36,6 +36,9 @@ object Prefs {
     fun themeMode(c: Context) = get(c).getString("theme_mode", "system") ?: "system"
     fun setThemeMode(c: Context, v: String) = get(c).edit().putString("theme_mode", v).apply()
 
+    fun floatingBar(c: Context) = get(c).getBoolean("floating_bar", true)
+    fun setFloatingBar(c: Context, v: Boolean) = get(c).edit().putBoolean("floating_bar", v).apply()
+
     fun screenshot(c: Context) = get(c).getBoolean("screenshot", false)
     fun setScreenshot(c: Context, v: Boolean) = get(c).edit().putBoolean("screenshot", v).apply()
 
