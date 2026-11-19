@@ -131,6 +131,7 @@ fun KeyBoxRoot() {
         else -> systemDark
     }
     var booted by remember { mutableStateOf(false) }
+    remember { ChromeState.floating = Prefs.floatingBar(ctx) }
 
     LaunchedEffect(Unit) {
         try {
@@ -1048,6 +1049,10 @@ fun EntryRow(
             }
         }
     }
+}
+
+object ChromeState {
+    var floating by mutableStateOf(true)
 }
 
 object BannerState {
