@@ -349,7 +349,7 @@ fun SettingsScreen(
             KDivider(Modifier.padding(start = 56.dp))
             KSwitchRow(
                 title = "悬浮底栏",
-                subtitle = "底栏圆角悬浮，三套材质共用",
+                subtitle = "底栏以胶囊形式悬浮，留出页面边缘",
                 icon = Icons.Rounded.VerticalAlignBottom,
                 checked = ChromeState.floating,
                 onChange = {
