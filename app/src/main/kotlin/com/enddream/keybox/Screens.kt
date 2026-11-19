@@ -112,7 +112,15 @@ fun SystemBars(dark: Boolean) {
 @Composable
 fun KeyBoxRoot() {
     val ctx = LocalContext.current
-    var style by remember { mutableStateOf(if (Prefs.style(ctx) == "miuix") UiStyle.Miuix else UiStyle.Material) }
+    var style by remember {
+        mutableStateOf(
+            when (Prefs.style(ctx)) {
+                "miuix" -> UiStyle.Miuix
+                "glass" -> UiStyle.Liquid
+                else -> UiStyle.Material
+            }
+        )
+    }
     var seed by remember { mutableStateOf(Prefs.seed(ctx)) }
     var dynamic by remember { mutableStateOf(Prefs.dynamic(ctx)) }
     var mode by remember { mutableStateOf(Prefs.themeMode(ctx)) }
@@ -139,6 +147,7 @@ fun KeyBoxRoot() {
             SystemBars(dark)
             val bg = if (isMiuix()) MiuixTheme.colorScheme.background else MaterialTheme.colorScheme.background
             Box(Modifier.fillMaxSize().background(bg)) {
+                if (isGlass()) GlassWallpaper()
                 if (!booted) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         KText("KeyBox", txt = Txt.Title1)
@@ -174,7 +183,14 @@ fun KeyBoxRoot() {
                                 style = style,
                                 onStyle = {
                                     style = it
-                                    Prefs.setStyle(ctx, if (it == UiStyle.Miuix) "miuix" else "material")
+                                    Prefs.setStyle(
+                                        ctx,
+                                        when (it) {
+                                            UiStyle.Miuix -> "miuix"
+                                            UiStyle.Liquid -> "glass"
+                                            else -> "material"
+                                        }
+                                    )
                                 },
                                 seed = seed,
                                 onSeed = { seed = it; Prefs.setSeed(ctx, it) },
@@ -787,10 +803,15 @@ fun EntryListScreen(
         }.sortedWith(compareByDescending<Entry> { it.fav }.thenBy { it.title })
     }
 
-    KCard(
-        Modifier.fillMaxSize().padding(horizontal = 12.dp),
-        padding = 0.dp
-    ) {
+    val cardModifier = if (isGlass()) {
+        Modifier
+            .fillMaxSize()
+            .padding(horizontal = 12.dp)
+            .liquidGlass(RoundedCornerShape(24.dp), glassSurface())
+    } else {
+        Modifier.fillMaxSize().padding(horizontal = 12.dp)
+    }
+    Box(cardModifier) {
         if (filtered.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 KText(
@@ -877,12 +898,18 @@ fun EntryActionsDialog(
 
 @Composable
 fun ActionRow(text: String, onClick: () -> Unit) {
-    val bg = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+    val bg = when {
+        isGlass() -> glassThin()
+        else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+    }
     Row(
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(bg)
+            .then(
+                if (isGlass()) Modifier.liquidGlass(RoundedCornerShape(12.dp), bg)
+                else Modifier.background(bg)
+            )
             .clickable { onClick() }
             .padding(horizontal = 14.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -942,7 +969,7 @@ fun NoticeBanner(text: String, onClose: () -> Unit, onDontShow: () -> Unit) {
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(bg)
+            .background(if (isGlass()) bg.copy(alpha = 0.82f) else bg)
             .padding(start = 12.dp, end = 4.dp, top = 8.dp, bottom = 6.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
