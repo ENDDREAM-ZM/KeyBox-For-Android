@@ -99,6 +99,7 @@ fun SettingsScreen(
     var removeErr by remember { mutableStateOf<String?>(null) }
     var pickTheme by remember { mutableStateOf(false) }
     var pickClip by remember { mutableStateOf(false) }
+    var pickStyle by remember { mutableStateOf(false) }
     var clipSec by remember { mutableIntStateOf(Prefs.clipboardSeconds(ctx)) }
     var resumeTick by remember { mutableIntStateOf(0) }
     OnResume { resumeTick++ }
@@ -328,12 +329,16 @@ fun SettingsScreen(
 
         KSection("外观")
         KCard(padding = 0.dp) {
-            KSwitchRow(
-                title = "Miuix 风格",
-                subtitle = "关闭为 Material 3",
+            KRow(
+                title = "界面材质",
+                subtitle = "Material 3 / Miuix / 液态玻璃",
+                value = when (style) {
+                    UiStyle.Miuix -> "Miuix"
+                    UiStyle.Liquid -> "液态玻璃"
+                    else -> "Material 3"
+                },
                 icon = Icons.Rounded.Palette,
-                checked = style == UiStyle.Miuix,
-                onChange = { onStyle(if (it) UiStyle.Miuix else UiStyle.Material) }
+                onClick = { pickStyle = true }
             )
             KDivider(Modifier.padding(start = 56.dp))
             KSwitchRow(
@@ -457,6 +462,25 @@ fun SettingsScreen(
             }
         )
     }
+    if (pickStyle) {
+        KDialog(
+            title = "界面材质",
+            onDismiss = { pickStyle = false },
+            content = {
+                listOf(
+                    UiStyle.Material to "Material 3",
+                    UiStyle.Miuix to "Miuix",
+                    UiStyle.Liquid to "液态玻璃"
+                ).forEach { (v, n) ->
+                    FilterRow(n, style == v) {
+                        onStyle(v)
+                        pickStyle = false
+                    }
+                }
+            },
+            buttons = { KTextButton("关闭", { pickStyle = false }, Modifier.weight(1f)) }
+        )
+    }
     if (pickClip) {
         KDialog(
             title = "剪贴板自动清除",
@@ -510,7 +534,7 @@ fun SettingsScreen(
             title = "自动锁定",
             onDismiss = { pickLock = false },
             content = {
-                listOf(5, 15, 30).forEach { m ->
+                listOf(1, 2, 5, 15, 30).forEach { m ->
                     FilterRow("$m 分钟", lockMin == m) {
                         lockMin = m
                         Prefs.setLockMinutes(ctx, m)
@@ -526,7 +550,7 @@ fun SettingsScreen(
             title = "回收站保留",
             onDismiss = { pickRet = false },
             content = {
-                listOf(7, 15, 30).forEach { d ->
+                listOf(1, 2, 3, 7, 15, 30).forEach { d ->
                     FilterRow("$d 天", retention == d) {
                         retention = d
                         Prefs.setRetentionDays(ctx, d)
