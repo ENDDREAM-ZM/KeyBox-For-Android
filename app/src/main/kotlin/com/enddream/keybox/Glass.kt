@@ -239,7 +239,7 @@ fun LiquidScaffold(
                     .onSizeChanged { botPx = it.height }
                     .then(
                         if (ChromeState.floating) Modifier
-                            .padding(start = 14.dp, end = 14.dp, bottom = 8.dp)
+                            .padding(start = 22.dp, end = 22.dp, bottom = 10.dp)
                             .navigationBarsPadding()
                         else Modifier
                     )
@@ -247,11 +247,11 @@ fun LiquidScaffold(
                         if (ChromeState.floating) Modifier.border(
                             1.dp,
                             Color.White.copy(alpha = if (glassDark()) 0.16f else 0.60f),
-                            RoundedCornerShape(28.dp)
+                            RoundedCornerShape(50)
                         ) else Modifier
                     )
                     .liquidGlassBar(
-                        if (ChromeState.floating) RoundedCornerShape(28.dp) else RectangleShape,
+                        if (ChromeState.floating) RoundedCornerShape(50) else RectangleShape,
                         glassSurfaceStrong(),
                         contentLayer
                     )
@@ -264,6 +264,65 @@ fun LiquidScaffold(
                     .padding(end = 16.dp, bottom = botDp + 16.dp)
             ) { fab() }
 
+            GlassHost.frame?.let { frame ->
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = if (dark) 0.40f else 0.24f))
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { GlassHost.dismiss?.invoke() }
+                ) {
+                    Box(
+                        Modifier
+                            .align(Alignment.Center)
+                            .padding(horizontal = 26.dp)
+                            .liquidGlass(
+                                RoundedCornerShape(28.dp),
+                                glassSurfaceStrong(),
+                                contentLayer,
+                                18.dp,
+                                10.dp
+                            )
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) {}
+                            .padding(20.dp)
+                            .heightIn(max = 560.dp)
+                            .verticalScroll(rememberScrollState())
+                    ) { frame() }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun GlassPage(content: @Composable () -> Unit) {
+    val wall = rememberLayerBackdrop()
+    val contentLayer = rememberLayerBackdrop()
+    DisposableEffect(Unit) {
+        GlassHost.active++
+        GlassHost.hasHost = true
+        onDispose {
+            GlassHost.active--
+            if (GlassHost.active == 0) {
+                GlassHost.hasHost = false
+                GlassHost.frame = null
+                GlassHost.dismiss = null
+            }
+        }
+    }
+    val dark = glassDark()
+    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        Box(Modifier.fillMaxSize().layerBackdrop(wall)) { GlassWallpaper() }
+        CompositionLocalProvider(
+            LocalGlassWall provides wall,
+            LocalGlassContent provides contentLayer
+        ) {
+            Box(Modifier.fillMaxSize().layerBackdrop(contentLayer)) { content() }
             GlassHost.frame?.let { frame ->
                 Box(
                     Modifier
