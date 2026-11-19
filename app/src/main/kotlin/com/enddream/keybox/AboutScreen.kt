@@ -37,7 +37,6 @@ private val platform = listOf(
 private val libs = listOf(
     Lib("Jetpack Compose", "1.12", "Apache-2.0", "全部界面与动画", "https://developer.android.com/jetpack/compose"),
     Lib("Miuix", "0.9.4", "Apache-2.0", "Miuix 风格的卡片、开关、输入框、导航与弹窗", "https://github.com/miuix-kotlin-multiplatform/miuix"),
-    Lib("Haze", "1.7.3", "Apache-2.0", "顶栏和底栏的毛玻璃", "https://github.com/chrisbanes/haze"),
     Lib("Backdrop", "2.0.1", "Apache-2.0", "液态玻璃材质", "https://github.com/Kyant0/AndroidLiquidGlass"),
     Lib("AndroidX Activity", "1.13.0", "Apache-2.0", "界面宿主与文件选择回调", "https://developer.android.com/jetpack/androidx/releases/activity"),
     Lib("Kotlin Coroutines", "1.10", "Apache-2.0", "解密、导入导出放到后台线程", "https://github.com/Kotlin/kotlinx.coroutines"),
