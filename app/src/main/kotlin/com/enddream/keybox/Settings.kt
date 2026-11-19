@@ -40,6 +40,7 @@ import androidx.compose.material.icons.rounded.Key
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Storage
+import androidx.compose.material.icons.rounded.VerticalAlignBottom
 import androidx.compose.material.icons.rounded.VerifiedUser
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -344,6 +345,17 @@ fun SettingsScreen(
                 },
                 icon = Icons.Rounded.Palette,
                 onClick = { pickStyle = true }
+            )
+            KDivider(Modifier.padding(start = 56.dp))
+            KSwitchRow(
+                title = "悬浮底栏",
+                subtitle = "底栏圆角悬浮，三套材质共用",
+                icon = Icons.Rounded.VerticalAlignBottom,
+                checked = ChromeState.floating,
+                onChange = {
+                    ChromeState.floating = it
+                    Prefs.setFloatingBar(ctx, it)
+                }
             )
             KDivider(Modifier.padding(start = 56.dp))
             KSwitchRow(
