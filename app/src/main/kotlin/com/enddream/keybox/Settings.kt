@@ -277,9 +277,11 @@ fun SettingsScreen(
                 Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                val tileBg = if (isMiuix()) MiuixTheme.colorScheme.surfaceContainerHigh
+                val tileBg = if (isGlass()) glassThin()
+                else if (isMiuix()) MiuixTheme.colorScheme.surfaceContainerHigh
                 else MaterialTheme.colorScheme.secondaryContainer
-                val tint = if (isMiuix()) MiuixTheme.colorScheme.onSurface
+                val tint = if (isGlass()) MaterialTheme.colorScheme.onSurface
+                else if (isMiuix()) MiuixTheme.colorScheme.onSurface
                 else MaterialTheme.colorScheme.onSecondaryContainer
                 Row(
                     Modifier
