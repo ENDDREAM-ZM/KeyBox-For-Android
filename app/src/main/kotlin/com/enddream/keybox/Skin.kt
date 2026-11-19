@@ -593,7 +593,7 @@ fun KScaffold(
                 .onSizeChanged { botPx = it.height }
                 .then(
                     if (ChromeState.floating) Modifier
-                        .padding(start = 14.dp, end = 14.dp, bottom = 8.dp)
+                        .padding(start = 22.dp, end = 22.dp, bottom = 10.dp)
                         .navigationBarsPadding()
                     else Modifier
                 )
@@ -601,10 +601,10 @@ fun KScaffold(
                     if (ChromeState.floating) Modifier.border(
                         1.dp,
                         barTint.copy(alpha = 0.40f),
-                        RoundedCornerShape(28.dp)
+                        RoundedCornerShape(50)
                     ) else Modifier
                 )
-                .clip(if (ChromeState.floating) RoundedCornerShape(28.dp) else RectangleShape)
+                .clip(if (ChromeState.floating) RoundedCornerShape(50) else RectangleShape)
                 .hazeEffect(haze) {
                     backgroundColor = barTint.copy(alpha = if (ChromeState.floating) 0.74f else 0.55f)
                     blurRadius = 24.dp
@@ -725,6 +725,49 @@ fun KNavBar(items: List<Triple<String, ImageVector, Int>>, selected: Int, onSele
                     onClick = { onSelect(idx) },
                     icon = { Icon(icon, null) },
                     label = { Text(label, fontFamily = FontFamily.Default) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun KFloatingNavBar(items: List<Triple<String, ImageVector, Int>>, selected: Int, onSelect: (Int) -> Unit) {
+    val accent = accentColor()
+    val muted = secondaryColor()
+    val pill = when {
+        isMiuix() -> MiuixTheme.colorScheme.primaryContainer
+        isGlass() -> MaterialTheme.colorScheme.primary.copy(alpha = 0.20f)
+        else -> MaterialTheme.colorScheme.primaryContainer
+    }
+    val pillFg = when {
+        isMiuix() -> MiuixTheme.colorScheme.onPrimaryContainer
+        isGlass() -> MaterialTheme.colorScheme.primary
+        else -> MaterialTheme.colorScheme.onPrimaryContainer
+    }
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        items.forEach { (label, icon, idx) ->
+            val on = selected == idx
+            Column(
+                Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(50))
+                    .then(if (on) Modifier.background(pill) else Modifier)
+                    .clickable { onSelect(idx) }
+                    .padding(vertical = 5.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(icon, null, Modifier.size(19.dp), tint = if (on) pillFg else muted)
+                Spacer(Modifier.height(1.dp))
+                KText(
+                    label,
+                    txt = Txt.Footnote2,
+                    color = if (on) pillFg else muted,
+                    maxLines = 1
                 )
             }
         }
