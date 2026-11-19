@@ -1,6 +1,7 @@
 package com.enddream.keybox
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -195,6 +196,7 @@ fun KCard(
         Box(
             modifier
                 .liquidGlass(RoundedCornerShape(22.dp), glassSurface())
+                .border(1.dp, glassStroke().copy(alpha = 0.6f), RoundedCornerShape(22.dp))
                 .padding(padding)
         ) { Column { content() } }
     } else {
