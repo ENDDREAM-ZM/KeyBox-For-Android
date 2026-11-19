@@ -64,8 +64,6 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextOverflow
-import dev.chrisbanes.haze.HazeTint
-import dev.chrisbanes.haze.hazeEffect
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import com.enddream.keybox.core.Entry
@@ -132,7 +130,10 @@ fun KeyBoxRoot() {
         else -> systemDark
     }
     var booted by remember { mutableStateOf(false) }
-    remember { ChromeState.floating = Prefs.floatingBar(ctx) }
+    remember {
+        ChromeState.floatingTop = Prefs.floatingTop(ctx)
+        ChromeState.floating = Prefs.floatingBar(ctx)
+    }
 
     LaunchedEffect(Unit) {
         try {
@@ -1175,6 +1176,7 @@ fun EntryRow(
 }
 
 object ChromeState {
+    var floatingTop by mutableStateOf(true)
     var floating by mutableStateOf(true)
 }
 
