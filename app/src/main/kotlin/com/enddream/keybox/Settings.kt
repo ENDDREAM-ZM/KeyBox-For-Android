@@ -287,7 +287,10 @@ fun SettingsScreen(
                     Modifier
                         .size(32.dp)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(tileBg),
+                        .then(
+                            if (isGlass()) Modifier.liquidGlass(RoundedCornerShape(10.dp), tileBg)
+                            else Modifier.background(tileBg)
+                        ),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) { Icon(Icons.Rounded.Screenshot, null, Modifier.size(18.dp), tint = tint) }
