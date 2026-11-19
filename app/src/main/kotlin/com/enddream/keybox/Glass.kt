@@ -85,6 +85,12 @@ fun glassThin(): Color {
 }
 
 @Composable
+fun glassStroke(): Color {
+    val d = glassDark()
+    return if (d) Color.White.copy(alpha = 0.16f) else Color.White.copy(alpha = 0.75f)
+}
+
+@Composable
 fun Modifier.liquidGlass(
     shape: Shape,
     tint: Color,
