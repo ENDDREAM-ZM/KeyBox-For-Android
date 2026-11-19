@@ -41,7 +41,16 @@ import com.enddream.keybox.core.Vault
 
 @Composable
 private fun ToggleCell(label: String, checked: Boolean, onChange: (Boolean) -> Unit, modifier: Modifier = Modifier) {
-    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        if (isGlass()) {
+            modifier
+                .liquidGlass(RoundedCornerShape(12.dp), glassThin())
+                .padding(horizontal = 10.dp, vertical = 4.dp)
+        } else {
+            modifier
+        },
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         KText(label, modifier = Modifier.weight(1f), txt = Txt.Body2)
         KSwitch(checked, onChange)
     }
