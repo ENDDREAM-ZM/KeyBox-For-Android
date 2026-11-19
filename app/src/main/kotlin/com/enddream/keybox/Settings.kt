@@ -264,6 +264,7 @@ fun SettingsScreen(
                 value = when (clipSec) {
                     0 -> "从不"
                     60 -> "1 分钟"
+                    120 -> "2 分钟"
                     300 -> "5 分钟"
                     else -> "30 秒"
                 },
@@ -461,7 +462,7 @@ fun SettingsScreen(
             title = "剪贴板自动清除",
             onDismiss = { pickClip = false },
             content = {
-                listOf(30 to "30 秒", 60 to "1 分钟", 300 to "5 分钟", 0 to "从不").forEach { (v, n) ->
+                listOf(0 to "从不", 30 to "30 秒", 60 to "1 分钟", 120 to "2 分钟", 300 to "5 分钟").forEach { (v, n) ->
                     FilterRow(n, clipSec == v) {
                         clipSec = v
                         Prefs.setClipboardSeconds(ctx, v)
