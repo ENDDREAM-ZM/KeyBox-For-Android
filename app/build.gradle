@@ -4,7 +4,7 @@ plugins {
     id 'org.jetbrains.compose'
 }
 
-def appVersionCode = 440
+def appVersionCode = 450
 def appVersionStep = (int) (appVersionCode / 10)
 def appVersionName = "1.${(int) (appVersionStep / 10)}.${appVersionStep % 10}"
 
@@ -62,7 +62,6 @@ dependencies {
     implementation compose.materialIconsExtended
     implementation 'androidx.activity:activity-compose:1.13.0'
     implementation 'top.yukonga.miuix.kmp:miuix-ui:0.9.4'
-    implementation 'dev.chrisbanes.haze:haze:1.7.3'
     implementation 'io.github.kyant0:backdrop:2.0.1'
     implementation 'androidx.camera:camera-core:1.4.1'
     implementation 'androidx.camera:camera-camera2:1.4.1'
