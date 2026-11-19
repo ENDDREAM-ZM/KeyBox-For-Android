@@ -11,6 +11,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -148,7 +149,6 @@ fun KeyBoxRoot() {
             SystemBars(dark)
             val bg = if (isMiuix()) MiuixTheme.colorScheme.background else MaterialTheme.colorScheme.background
             Box(Modifier.fillMaxSize().background(bg)) {
-                if (isGlass()) GlassWallpaper()
                 if (!booted) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         KText("KeyBox", txt = Txt.Title1)
@@ -210,6 +210,17 @@ fun KeyBoxRoot() {
     }
 }
 
+class UnlockUi(
+    val pw: String,
+    val setPw: (String) -> Unit,
+    val err: String?,
+    val busy: Boolean,
+    val bioOn: Boolean,
+    val unlock: () -> Unit,
+    val bio: () -> Unit,
+    val reset: () -> Unit
+)
+
 @Composable
 fun UnlockScreen(onUnlocked: () -> Unit) {
     val ctx = LocalContext.current
@@ -252,48 +263,21 @@ fun UnlockScreen(onUnlocked: () -> Unit) {
         if (bioOn) doBio()
     }
 
-    Column(
-        Modifier.fillMaxSize().padding(28.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        val tint = if (isMiuix()) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
-        Icon(Icons.Rounded.Lock, null, Modifier.size(60.dp), tint = tint)
-        Spacer(Modifier.height(14.dp))
-        KText("KeyBox", txt = Txt.Title1)
-        Spacer(Modifier.height(6.dp))
-        KText(
-            if (bioOn) "已开启生物识别解锁" else "输入主密码解锁保险库",
-            txt = Txt.Footnote2,
-            color = secondaryColor()
-        )
-        Spacer(Modifier.height(20.dp))
-        KField(pw, { pw = it }, "主密码", Modifier.fillMaxWidth(), password = true, enabled = !busy)
-        if (err != null) {
-            Spacer(Modifier.height(8.dp))
-            KText(err!!, txt = Txt.Footnote2, color = errorColor())
-        }
-        Spacer(Modifier.height(16.dp))
-        if (busy) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                KSpinner(34.dp)
-                Spacer(Modifier.height(10.dp))
-                KText("正在加载密码库", txt = Txt.Footnote2, color = secondaryColor())
-            }
-        } else {
-            KButton(
-                "解锁",
-                onClick = { doUnlock(pw) },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = pw.isNotEmpty()
-            )
-            if (bioOn) {
-                Spacer(Modifier.height(6.dp))
-                KTextButton("生物识别验证", onClick = { doBio() }, modifier = Modifier.fillMaxWidth())
-            }
-            Spacer(Modifier.height(2.dp))
-            KTextButton("忘记密码？重置密码库", onClick = { showRecovery = true }, modifier = Modifier.fillMaxWidth())
-        }
+    val ui = UnlockUi(
+        pw = pw,
+        setPw = { pw = it },
+        err = err,
+        busy = busy,
+        bioOn = bioOn,
+        unlock = { doUnlock(pw) },
+        bio = { doBio() },
+        reset = { showRecovery = true }
+    )
+
+    when {
+        isGlass() -> GlassPage { UnlockGlass(ui) }
+        isMiuix() -> UnlockMiuix(ui)
+        else -> UnlockMaterial(ui)
     }
 
     if (showRecovery) {
@@ -305,6 +289,143 @@ fun UnlockScreen(onUnlocked: () -> Unit) {
                 onUnlocked()
             }
         )
+    }
+}
+
+@Composable
+private fun UnlockActions(ui: UnlockUi, wide: Boolean = true) {
+    if (ui.busy) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            KSpinner(34.dp)
+            Spacer(Modifier.height(10.dp))
+            KText("正在加载密码库", txt = Txt.Footnote2, color = secondaryColor())
+        }
+    } else {
+        KButton(
+            "解锁",
+            onClick = ui.unlock,
+            modifier = if (wide) Modifier.fillMaxWidth() else Modifier,
+            enabled = ui.pw.isNotEmpty()
+        )
+        if (ui.bioOn) {
+            Spacer(Modifier.height(6.dp))
+            KTextButton("生物识别验证", onClick = ui.bio, modifier = if (wide) Modifier.fillMaxWidth() else Modifier)
+        }
+        Spacer(Modifier.height(2.dp))
+        KTextButton("忘记密码？重置密码库", onClick = ui.reset, modifier = if (wide) Modifier.fillMaxWidth() else Modifier)
+    }
+}
+
+@Composable
+private fun UnlockMaterial(ui: UnlockUi) {
+    Column(
+        Modifier.fillMaxSize().padding(28.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Box(
+            Modifier
+                .size(76.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primaryContainer),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                Icons.Rounded.Lock,
+                null,
+                Modifier.size(36.dp),
+                tint = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
+        Spacer(Modifier.height(18.dp))
+        KText("KeyBox", txt = Txt.Title1)
+        Spacer(Modifier.height(6.dp))
+        KText(
+            if (ui.bioOn) "已开启生物识别解锁" else "输入主密码解锁保险库",
+            txt = Txt.Footnote2,
+            color = secondaryColor()
+        )
+        Spacer(Modifier.height(24.dp))
+        KField(ui.pw, ui.setPw, "主密码", Modifier.fillMaxWidth(), password = true, enabled = !ui.busy)
+        if (ui.err != null) {
+            Spacer(Modifier.height(8.dp))
+            KText(ui.err, txt = Txt.Footnote2, color = errorColor())
+        }
+        Spacer(Modifier.height(18.dp))
+        UnlockActions(ui)
+    }
+}
+
+@Composable
+private fun UnlockMiuix(ui: UnlockUi) {
+    Column(
+        Modifier.fillMaxSize().padding(horizontal = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            Icons.Rounded.Lock,
+            null,
+            Modifier.size(54.dp),
+            tint = MiuixTheme.colorScheme.primary
+        )
+        Spacer(Modifier.height(12.dp))
+        KText("KeyBox", txt = Txt.Title1)
+        Spacer(Modifier.height(4.dp))
+        KText(
+            if (ui.bioOn) "已开启生物识别解锁" else "输入主密码解锁保险库",
+            txt = Txt.Footnote2,
+            color = secondaryColor()
+        )
+        Spacer(Modifier.height(22.dp))
+        KCard(Modifier.fillMaxWidth(), padding = 14.dp) {
+            KField(ui.pw, ui.setPw, "主密码", Modifier.fillMaxWidth(), password = true, enabled = !ui.busy)
+            if (ui.err != null) {
+                Spacer(Modifier.height(8.dp))
+                KText(ui.err, txt = Txt.Footnote2, color = errorColor())
+            }
+            Spacer(Modifier.height(14.dp))
+            UnlockActions(ui)
+        }
+    }
+}
+
+@Composable
+private fun UnlockGlass(ui: UnlockUi) {
+    Column(
+        Modifier.fillMaxSize().padding(horizontal = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            Icons.Rounded.Lock,
+            null,
+            Modifier.size(54.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Spacer(Modifier.height(12.dp))
+        KText("KeyBox", txt = Txt.Title1)
+        Spacer(Modifier.height(4.dp))
+        KText(
+            if (ui.bioOn) "已开启生物识别解锁" else "输入主密码解锁保险库",
+            txt = Txt.Footnote2,
+            color = secondaryColor()
+        )
+        Spacer(Modifier.height(22.dp))
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .liquidGlass(RoundedCornerShape(28.dp), glassSurfaceStrong())
+                .padding(18.dp)
+        ) {
+            KField(ui.pw, ui.setPw, "主密码", Modifier.fillMaxWidth(), password = true, enabled = !ui.busy)
+            if (ui.err != null) {
+                Spacer(Modifier.height(8.dp))
+                KText(ui.err, txt = Txt.Footnote2, color = errorColor())
+            }
+            Spacer(Modifier.height(14.dp))
+            UnlockActions(ui)
+        }
     }
 }
 
@@ -525,6 +646,8 @@ fun MainScaffold(
                         sel = emptySet()
                     }
                 )
+            } else if (ChromeState.floating) {
+                KFloatingNavBar(navItems, tab) { t -> AppState.tab = t }
             } else {
                 KNavBar(navItems, tab) { t -> AppState.tab = t }
             }
@@ -716,7 +839,7 @@ fun SelectionBar(
     Column(
         Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 8.dp)
+            .padding(horizontal = if (ChromeState.floating) 8.dp else 12.dp, vertical = if (ChromeState.floating) 6.dp else 8.dp)
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             KButton(
