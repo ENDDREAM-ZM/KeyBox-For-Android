@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -228,25 +229,15 @@ fun LiquidScaffold(
                     .onSizeChanged { topPx = it.height }
                     .then(
                         if (ChromeState.floatingTop) Modifier
-                            .padding(start = 12.dp, end = 12.dp, top = 8.dp)
                             .statusBarsPadding()
+                            .padding(top = 8.dp)
                         else Modifier
-                    )
-                    .then(
-                        if (ChromeState.floatingTop) Modifier.border(
-                            1.dp,
-                            Color.White.copy(alpha = if (glassDark()) 0.16f else 0.60f),
-                            RoundedCornerShape(26.dp)
-                        ) else Modifier
-                    )
-                    .liquidGlassBar(
-                        if (ChromeState.floatingTop) RoundedCornerShape(26.dp) else RectangleShape,
-                        glassSurfaceStrong(),
-                        contentLayer
+                            .liquidGlassBar(RectangleShape, glassSurfaceStrong(), contentLayer)
+                            .statusBarsPadding()
                     )
             ) {
                 Box(Modifier.consumeWindowInsets(WindowInsets.statusBars)) {
-                    Column {
+                    Column(verticalArrangement = Arrangement.spacedBy(if (ChromeState.floatingTop) 8.dp else 0.dp)) {
                         topBar()
                         if (BannerState.visible) MasterBannerStrip()
                         topContent()
@@ -260,21 +251,19 @@ fun LiquidScaffold(
                     .onSizeChanged { botPx = it.height }
                     .then(
                         if (ChromeState.floating) Modifier
-                            .padding(start = 22.dp, end = 22.dp, bottom = 10.dp)
-                            .navigationBarsPadding()
-                        else Modifier
+                        else Modifier.liquidGlassBar(RectangleShape, glassSurfaceStrong(), contentLayer)
                     )
+                    .navigationBarsPadding()
                     .then(
-                        if (ChromeState.floating) Modifier.border(
-                            1.dp,
-                            Color.White.copy(alpha = if (glassDark()) 0.16f else 0.60f),
-                            RoundedCornerShape(50)
-                        ) else Modifier
-                    )
-                    .liquidGlassBar(
-                        if (ChromeState.floating) RoundedCornerShape(50) else RectangleShape,
-                        glassSurfaceStrong(),
-                        contentLayer
+                        if (ChromeState.floating) Modifier
+                            .padding(start = 22.dp, end = 22.dp, bottom = 10.dp)
+                            .border(
+                                1.dp,
+                                Color.White.copy(alpha = if (glassDark()) 0.16f else 0.60f),
+                                RoundedCornerShape(50)
+                            )
+                            .liquidGlassBar(RoundedCornerShape(50), glassSurfaceStrong(), contentLayer)
+                        else Modifier
                     )
             ) {
                 Box(Modifier.consumeWindowInsets(WindowInsets.navigationBars)) { bottomBar() }

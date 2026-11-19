@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -69,6 +70,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -183,12 +185,13 @@ fun KText(
 fun KCard(
     modifier: Modifier = Modifier,
     padding: Dp = 14.dp,
+    corner: Dp = 22.dp,
     content: @Composable ColumnScope.() -> Unit
 ) {
     if (isMiuix()) {
         MxCard(
             modifier = modifier,
-            cornerRadius = 18.dp,
+            cornerRadius = corner,
             insideMargin = PaddingValues(padding)
         ) {
             content()
@@ -196,20 +199,49 @@ fun KCard(
     } else if (isGlass()) {
         Box(
             modifier
-                .liquidGlass(RoundedCornerShape(22.dp), glassSurface())
-                .border(1.dp, glassStroke().copy(alpha = 0.6f), RoundedCornerShape(22.dp))
+                .liquidGlass(RoundedCornerShape(corner), glassSurface())
+                .border(1.dp, glassStroke().copy(alpha = 0.6f), RoundedCornerShape(corner))
                 .padding(padding)
         ) { Column { content() } }
     } else {
         Card(
             modifier = modifier,
-            shape = RoundedCornerShape(22.dp),
+            shape = RoundedCornerShape(corner),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
         ) {
             Column(Modifier.padding(padding)) { content() }
         }
     }
 }
+
+@Composable
+fun KBarSurface(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    if (!ChromeState.floatingTop) {
+        Box(modifier.fillMaxWidth()) { content() }
+        return
+    }
+    val shape = RoundedCornerShape(50)
+    val stroke = when {
+        isGlass() -> Color.White.copy(alpha = if (glassDark()) 0.16f else 0.60f)
+        isMiuix() -> MiuixTheme.colorScheme.dividerLine.copy(alpha = 0.5f)
+        else -> MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)
+    }
+    val surface = if (isGlass())
+        Modifier.liquidGlassBar(shape, glassSurfaceStrong(), LocalGlassContent.current)
+    else Modifier.background(headerBarTint(), shape)
+    Box(
+        modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp)
+            .clip(shape)
+            .then(surface)
+            .border(1.dp, stroke, shape)
+    ) { content() }
+}
+
+@Composable
+fun headerBarTint(): Color =
+    if (isMiuix()) MiuixTheme.colorScheme.surface else MaterialTheme.colorScheme.surface
 
 @Composable
 fun KSection(text: String, modifier: Modifier = Modifier) {
@@ -299,36 +331,92 @@ fun KField(
     mono: Boolean = false,
     enabled: Boolean = true,
     trailing: (@Composable () -> Unit)? = null,
-    cornerRadius: Dp? = null
+    cornerRadius: Dp? = null,
+    compact: Boolean = false,
+    bare: Boolean = false
 ) {
-    if (isGlass()) {
-        val r = cornerRadius ?: 16.dp
-        Box(modifier.liquidGlass(RoundedCornerShape(r), glassThin())) {
-            OutlinedTextField(
+    if (bare) {
+        Box(
+            modifier.height(40.dp),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            BasicTextField(
                 value = value,
                 onValueChange = onChange,
-                modifier = Modifier.fillMaxWidth(),
-                label = if (asPlaceholder) null else ({ Text(label, fontFamily = FontFamily.Default) }),
-                placeholder = if (asPlaceholder) ({ Text(label, fontFamily = FontFamily.Default) }) else null,
-                singleLine = singleLine,
-                readOnly = readOnly,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
                 enabled = enabled,
-                minLines = minLines,
+                readOnly = readOnly,
+                singleLine = singleLine,
+                textStyle = if (isMiuix()) MiuixTheme.textStyles.main.copy(
+                    color = MiuixTheme.colorScheme.onSurface,
+                    fontFamily = if (mono) FontFamily.Monospace else FontFamily.Default
+                ) else MaterialTheme.typography.bodyMedium.copy(
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontFamily = if (mono) FontFamily.Monospace else FontFamily.Default
+                ),
+                cursorBrush = SolidColor(accentColor()),
                 visualTransformation = if (password) PasswordVisualTransformation() else VisualTransformation.None,
                 keyboardOptions = KeyboardOptions(keyboardType = if (password) KeyboardType.Password else keyboardType),
-                textStyle = if (mono) MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace)
-                else MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Default),
-                trailingIcon = trailing,
-                shape = RoundedCornerShape(r),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    disabledContainerColor = Color.Transparent,
-                    focusedBorderColor = Color.Transparent,
-                    unfocusedBorderColor = Color.Transparent,
-                    disabledBorderColor = Color.Transparent
-                )
+                decorationBox = { inner ->
+                    Box(contentAlignment = Alignment.CenterStart) {
+                        if (value.isEmpty()) {
+                            Text(
+                                label,
+                                style = if (isMiuix()) mxStyle(Txt.Main) else MaterialTheme.typography.bodyMedium,
+                                color = secondaryColor(),
+                                fontFamily = FontFamily.Default,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        inner()
+                    }
+                }
             )
+            trailing?.let { Box(Modifier.align(Alignment.CenterEnd).padding(end = 8.dp)) { it() } }
+        }
+        return
+    }
+    if (isGlass()) {
+        val r = cornerRadius ?: 16.dp
+        val h = if (compact) 40.dp else 50.dp
+        Box(
+            modifier
+                .height(h)
+                .liquidGlass(RoundedCornerShape(r), glassThin()),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            BasicTextField(
+                value = value,
+                onValueChange = onChange,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp),
+                enabled = enabled,
+                readOnly = readOnly,
+                singleLine = singleLine,
+                textStyle = MaterialTheme.typography.bodyMedium.copy(
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontFamily = if (mono) FontFamily.Monospace else FontFamily.Default
+                ),
+                cursorBrush = SolidColor(accentColor()),
+                visualTransformation = if (password) PasswordVisualTransformation() else VisualTransformation.None,
+                keyboardOptions = KeyboardOptions(keyboardType = if (password) KeyboardType.Password else keyboardType),
+                decorationBox = { inner ->
+                    Box(contentAlignment = Alignment.CenterStart) {
+                        if (value.isEmpty()) {
+                            Text(
+                                label,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = secondaryColor(),
+                                fontFamily = FontFamily.Default,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        inner()
+                    }
+                }
+            )
+            trailing?.let { Box(Modifier.align(Alignment.CenterEnd).padding(end = 8.dp)) { it() } }
         }
     } else if (isMiuix()) {
         MxTextField(
@@ -377,7 +465,8 @@ fun KButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    primary: Boolean = true
+    primary: Boolean = true,
+    dense: Boolean = false
 ) {
     if (isGlass()) {
         Box(
@@ -388,14 +477,16 @@ fun KButton(
                     if (primary) MaterialTheme.colorScheme.primary.copy(alpha = 0.92f) else glassSurfaceStrong()
                 )
                 .clickable(enabled = enabled) { onClick() }
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(horizontal = if (dense) 8.dp else 16.dp, vertical = 8.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text,
                 fontFamily = FontFamily.Default,
                 color = if (primary) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-                style = MaterialTheme.typography.labelLarge
+                style = if (dense) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge,
+                maxLines = 1,
+                softWrap = false
             )
         }
     } else if (isMiuix()) {
@@ -404,17 +495,25 @@ fun KButton(
             modifier = modifier,
             enabled = enabled,
             minHeight = 38.dp,
-            insideMargin = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+            insideMargin = PaddingValues(horizontal = if (dense) 6.dp else 12.dp, vertical = 8.dp),
             colors = if (primary) MxButtonDefaults.buttonColorsPrimary() else MxButtonDefaults.buttonColors()
-        ) { MxText(text, style = MiuixTheme.textStyles.button) }
+        ) {
+            MxText(
+                text,
+                style = if (dense) MiuixTheme.textStyles.footnote1 else MiuixTheme.textStyles.button,
+                maxLines = 1
+            )
+        }
     } else {
+        val pad = PaddingValues(horizontal = if (dense) 6.dp else 24.dp)
+        val style = if (dense) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge
         if (primary) {
-            Button(onClick = onClick, modifier = modifier, enabled = enabled) {
-                Text(text, fontFamily = FontFamily.Default)
+            Button(onClick = onClick, modifier = modifier, enabled = enabled, contentPadding = pad) {
+                Text(text, fontFamily = FontFamily.Default, style = style, maxLines = 1, softWrap = false)
             }
         } else {
-            OutlinedButton(onClick = onClick, modifier = modifier, enabled = enabled) {
-                Text(text, fontFamily = FontFamily.Default)
+            OutlinedButton(onClick = onClick, modifier = modifier, enabled = enabled, contentPadding = pad) {
+                Text(text, fontFamily = FontFamily.Default, style = style, maxLines = 1, softWrap = false)
             }
         }
     }
@@ -562,7 +661,6 @@ fun KScaffold(
                 }
             }
         }
-        val topShape = if (ChromeState.floatingTop) RoundedCornerShape(26.dp) else RectangleShape
         Box(
             Modifier
                 .align(Alignment.TopCenter)
@@ -570,23 +668,15 @@ fun KScaffold(
                 .onSizeChanged { topPx = it.height }
                 .then(
                     if (ChromeState.floatingTop) Modifier
-                        .padding(start = 12.dp, end = 12.dp, top = 8.dp)
                         .statusBarsPadding()
+                        .padding(top = 8.dp)
                     else Modifier
+                        .background(barTint)
+                        .statusBarsPadding()
                 )
-                .then(
-                    if (ChromeState.floatingTop) Modifier.border(
-                        1.dp,
-                        if (isMiuix()) MiuixTheme.colorScheme.dividerLine.copy(alpha = 0.5f)
-                        else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
-                        topShape
-                    ) else Modifier
-                )
-                .clip(topShape)
-                .background(barTint)
         ) {
             Box(Modifier.consumeWindowInsets(WindowInsets.statusBars)) {
-                Column {
+                Column(verticalArrangement = Arrangement.spacedBy(if (ChromeState.floatingTop) 8.dp else 0.dp)) {
                     topBar()
                     if (BannerState.visible) MasterBannerStrip()
                     topContent()
@@ -600,20 +690,22 @@ fun KScaffold(
                 .onSizeChanged { botPx = it.height }
                 .then(
                     if (ChromeState.floating) Modifier
+                    else Modifier.background(barTint)
+                )
+                .navigationBarsPadding()
+                .then(
+                    if (ChromeState.floating) Modifier
                         .padding(start = 22.dp, end = 22.dp, bottom = 10.dp)
-                        .navigationBarsPadding()
+                        .border(
+                            1.dp,
+                            if (isMiuix()) MiuixTheme.colorScheme.dividerLine.copy(alpha = 0.5f)
+                            else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+                            RoundedCornerShape(50)
+                        )
+                        .clip(RoundedCornerShape(50))
+                        .background(barTint)
                     else Modifier
                 )
-                .then(
-                    if (ChromeState.floating) Modifier.border(
-                        1.dp,
-                        if (isMiuix()) MiuixTheme.colorScheme.dividerLine.copy(alpha = 0.5f)
-                        else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
-                        RoundedCornerShape(50)
-                    ) else Modifier
-                )
-                .clip(if (ChromeState.floating) RoundedCornerShape(50) else RectangleShape)
-                .background(barTint)
         ) {
             Box(Modifier.consumeWindowInsets(WindowInsets.navigationBars)) { bottomBar() }
         }
@@ -634,74 +726,77 @@ fun KTopBar(
     onBack: (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {}
 ) {
-    if (isMiuix()) {
+    val floating = ChromeState.floatingTop
+    KBarSurface {
         Column(
             Modifier
                 .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(start = 16.dp, end = 6.dp, top = 6.dp, bottom = 8.dp)
+                .padding(
+                    start = if (floating) 22.dp else 16.dp,
+                    end = if (floating) 8.dp else 6.dp,
+                    top = if (floating) 8.dp else 6.dp,
+                    bottom = if (floating) 8.dp else 8.dp
+                )
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (onBack != null) {
-                    MxIconButton(onClick = onBack) {
-                        Icon(Icons.Rounded.ArrowBack, "返回", tint = MiuixTheme.colorScheme.onSurface)
+                    if (isMiuix()) {
+                        MxIconButton(onClick = onBack) {
+                            Icon(Icons.Rounded.ArrowBack, "返回", tint = MiuixTheme.colorScheme.onSurface)
+                        }
+                    } else {
+                        Box(
+                            Modifier.size(34.dp).clickable { onBack() },
+                            contentAlignment = Alignment.CenterStart
+                        ) {
+                            Icon(Icons.Rounded.ArrowBack, "返回", tint = MaterialTheme.colorScheme.onSurface)
+                        }
                     }
                     Spacer(Modifier.width(4.dp))
                 }
-                MxText(
-                    title,
-                    modifier = Modifier.weight(1f),
-                    style = MiuixTheme.textStyles.title2,
-                    color = MiuixTheme.colorScheme.onSurface
-                )
-                actions()
-            }
-            if (!subtitle.isNullOrEmpty()) {
-                Spacer(Modifier.height(7.dp))
-                MxText(
-                    subtitle,
-                    modifier = Modifier.padding(start = if (onBack != null) 4.dp else 0.dp),
-                    style = MiuixTheme.textStyles.footnote2,
-                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary
-                )
-            }
-        }
-    } else {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(start = 16.dp, end = 6.dp, top = 6.dp, bottom = 8.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (onBack != null) {
-                    Box(
-                        Modifier.size(34.dp).clickable { onBack() },
-                        contentAlignment = Alignment.CenterStart
-                    ) {
-                        Icon(Icons.Rounded.ArrowBack, "返回", tint = MaterialTheme.colorScheme.onSurface)
-                    }
-                    Spacer(Modifier.width(4.dp))
+                if (isMiuix()) {
+                    MxText(
+                        title,
+                        modifier = Modifier.weight(1f),
+                        style = MiuixTheme.textStyles.title2,
+                        color = MiuixTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                } else {
+                    Text(
+                        title,
+                        modifier = Modifier.weight(1f),
+                        style = mdStyle(Txt.Title2),
+                        fontFamily = FontFamily.Default,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
-                Text(
-                    title,
-                    modifier = Modifier.weight(1f),
-                    style = mdStyle(Txt.Title2),
-                    fontFamily = FontFamily.Default
-                )
                 actions()
             }
             if (!subtitle.isNullOrEmpty()) {
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    subtitle,
-                    modifier = Modifier.padding(start = if (onBack != null) 4.dp else 0.dp),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontFamily = FontFamily.Default,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                Spacer(Modifier.height(if (floating) 1.dp else 2.dp))
+                if (isMiuix()) {
+                    MxText(
+                        subtitle,
+                        modifier = Modifier.padding(start = if (onBack != null) 4.dp else 0.dp),
+                        style = MiuixTheme.textStyles.footnote2,
+                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                } else {
+                    Text(
+                        subtitle,
+                        modifier = Modifier.padding(start = if (onBack != null) 4.dp else 0.dp),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontFamily = FontFamily.Default,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         }
     }

@@ -350,7 +350,7 @@ fun SettingsScreen(
             KDivider(Modifier.padding(start = 56.dp))
             KSwitchRow(
                 title = "悬浮顶栏",
-                subtitle = "顶栏以圆角面板悬浮在页面之上",
+                subtitle = "顶栏以胶囊形式悬浮",
                 icon = Icons.Rounded.VerticalAlignTop,
                 checked = ChromeState.floatingTop,
                 onChange = {
@@ -410,7 +410,13 @@ fun SettingsScreen(
                 }
                 Spacer(Modifier.height(10.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    KField(hex, { hex = it }, "自定义色号 #RRGGBB", Modifier.weight(1f))
+                    KField(
+                        hex,
+                        { hex = it },
+                        "自定义色号 #RRGGBB",
+                        Modifier.weight(1f),
+                        compact = true
+                    )
                     Spacer(Modifier.width(6.dp))
                     KButton("应用", {
                         val v = hex.trim().removePrefix("#")

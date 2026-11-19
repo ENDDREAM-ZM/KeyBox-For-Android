@@ -1,6 +1,7 @@
 package com.enddream.keybox
 
 import android.app.Activity
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -16,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -63,6 +65,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
@@ -599,8 +602,7 @@ fun MainScaffold(
                     actions = { KIconButton(Icons.Rounded.Lock, "锁定", onLock) }
                 )
             }
-        },
-        topContent = {
+        },        topContent = {
             if (tab == 0 || tab == 3) {
                 SearchRow(
                     q = q,
@@ -666,7 +668,16 @@ fun MainScaffold(
             }
         }
     ) { _ ->
-        when (tab) {
+        BackHandler(enabled = selecting) {
+            selecting = false
+            sel = emptySet()
+        }
+        Box(
+            Modifier
+                .fillMaxSize()
+                .tabSwipe(navItems.size, tab, enabled = !selecting) { AppState.tab = it }
+        ) {
+            when (tab) {
             0 -> EntryListScreen(
                 q = q,
                 cat = cat,
@@ -746,6 +757,7 @@ fun MainScaffold(
                 themeMode, onThemeMode,
                 onAbout = { AppState.route = Route.About }
             )
+            }
         }
         longPress?.let { e ->
             EntryActionsDialog(
@@ -784,6 +796,26 @@ fun MainScaffold(
             )
         }
         ConfirmHost()
+    }
+}
+
+private fun Modifier.tabSwipe(count: Int, current: Int, enabled: Boolean, onSelect: (Int) -> Unit): Modifier {
+    if (!enabled) return this
+    return this.pointerInput(count, current) {
+        var total = 0f
+        detectHorizontalDragGestures(
+            onDragStart = { total = 0f },
+            onHorizontalDrag = { _, drag -> total += drag },
+            onDragEnd = {
+                val limit = 64.dp.toPx()
+                when {
+                    total <= -limit && current < count - 1 -> onSelect(current + 1)
+                    total >= limit && current > 0 -> onSelect(current - 1)
+                }
+                total = 0f
+            },
+            onDragCancel = { total = 0f }
+        )
     }
 }
 
@@ -854,9 +886,10 @@ fun SelectionBar(
                 KButton(
                     "移入回收站",
                     onClick = onTrash,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1.25f),
                     enabled = count > 0,
-                    primary = false
+                    primary = false,
+                    dense = true
                 )
             }
             KButton(
@@ -928,10 +961,8 @@ fun EntryListScreen(
         }.sortedWith(compareByDescending<Entry> { it.fav }.thenBy { it.title })
     }
 
-    KCard(
-        Modifier.fillMaxSize().padding(horizontal = 12.dp),
-        padding = 0.dp
-    ) {
+    @Composable
+    fun Body() {
         if (filtered.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 KText(
@@ -960,6 +991,12 @@ fun EntryListScreen(
             }
         }
     }
+
+    if (isGlass()) {
+        Box(Modifier.fillMaxSize()) { Body() }
+    } else {
+        KCard(Modifier.fillMaxSize(), padding = 0.dp, corner = 0.dp) { Body() }
+    }
 }
 
 @Composable
@@ -971,27 +1008,29 @@ fun SearchRow(
     onToggleSelect: () -> Unit,
     onFilter: () -> Unit
 ) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .padding(start = 14.dp, end = 8.dp, top = 2.dp, bottom = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        KField(
-            value = q,
-            onChange = onQ,
-            label = placeholder,
-            modifier = Modifier.weight(1f),
-            asPlaceholder = true,
-            cornerRadius = 28.dp
-        )
-        Spacer(Modifier.width(2.dp))
-        KIconButton(Icons.Rounded.FilterList, "筛选", onFilter)
-        KIconButton(
-            if (selecting) Icons.Rounded.Close else Icons.Rounded.Checklist,
-            if (selecting) "退出多选" else "多选",
-            onToggleSelect
-        )
+    KBarSurface {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 4.dp, top = 2.dp, bottom = 2.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            KField(
+                value = q,
+                onChange = onQ,
+                label = placeholder,
+                modifier = Modifier.weight(1f),
+                asPlaceholder = true,
+                bare = ChromeState.floatingTop,
+                cornerRadius = 50.dp
+            )
+            KIconButton(Icons.Rounded.FilterList, "筛选", onFilter)
+            KIconButton(
+                if (selecting) Icons.Rounded.Close else Icons.Rounded.Checklist,
+                if (selecting) "退出多选" else "多选",
+                onToggleSelect
+            )
+        }
     }
 }
 
