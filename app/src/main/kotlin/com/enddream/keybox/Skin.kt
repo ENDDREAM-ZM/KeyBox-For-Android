@@ -107,6 +107,9 @@ val LocalStyle = staticCompositionLocalOf { UiStyle.Material }
 @Composable
 fun isMiuix(): Boolean = LocalStyle.current == UiStyle.Miuix
 
+@Composable
+fun isGlass(): Boolean = LocalStyle.current == UiStyle.Liquid
+
 enum class Txt { Title1, Title2, Title3, Body1, Body2, Footnote1, Footnote2, Button, Main }
 
 @Composable
@@ -188,6 +191,12 @@ fun KCard(
         ) {
             content()
         }
+    } else if (isGlass()) {
+        Box(
+            modifier
+                .liquidGlass(RoundedCornerShape(22.dp), glassSurface())
+                .padding(padding)
+        ) { Column { content() } }
     } else {
         Card(
             modifier = modifier,
@@ -275,7 +284,36 @@ fun KField(
     trailing: (@Composable () -> Unit)? = null,
     cornerRadius: Dp? = null
 ) {
-    if (isMiuix()) {
+    if (isGlass()) {
+        val r = cornerRadius ?: 16.dp
+        Box(modifier.liquidGlass(RoundedCornerShape(r), glassThin())) {
+            OutlinedTextField(
+                value = value,
+                onValueChange = onChange,
+                modifier = Modifier.fillMaxWidth(),
+                label = if (asPlaceholder) null else ({ Text(label, fontFamily = FontFamily.Default) }),
+                placeholder = if (asPlaceholder) ({ Text(label, fontFamily = FontFamily.Default) }) else null,
+                singleLine = singleLine,
+                readOnly = readOnly,
+                enabled = enabled,
+                minLines = minLines,
+                visualTransformation = if (password) PasswordVisualTransformation() else VisualTransformation.None,
+                keyboardOptions = KeyboardOptions(keyboardType = if (password) KeyboardType.Password else keyboardType),
+                textStyle = if (mono) MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace)
+                else MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Default),
+                trailingIcon = trailing,
+                shape = RoundedCornerShape(r),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    disabledContainerColor = Color.Transparent,
+                    focusedBorderColor = Color.Transparent,
+                    unfocusedBorderColor = Color.Transparent,
+                    disabledBorderColor = Color.Transparent
+                )
+            )
+        }
+    } else if (isMiuix()) {
         MxTextField(
             value = value,
             onValueChange = onChange,
@@ -324,7 +362,26 @@ fun KButton(
     enabled: Boolean = true,
     primary: Boolean = true
 ) {
-    if (isMiuix()) {
+    if (isGlass()) {
+        Box(
+            modifier
+                .heightIn(min = 38.dp)
+                .liquidGlass(
+                    RoundedCornerShape(50),
+                    if (primary) MaterialTheme.colorScheme.primary.copy(alpha = 0.92f) else glassSurfaceStrong()
+                )
+                .clickable(enabled = enabled) { onClick() }
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text,
+                fontFamily = FontFamily.Default,
+                color = if (primary) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.labelLarge
+            )
+        }
+    } else if (isMiuix()) {
         MxButton(
             onClick = onClick,
             modifier = modifier,
@@ -353,7 +410,15 @@ fun KTextButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true
 ) {
-    if (isMiuix()) {
+    if (isGlass()) {
+        TextButton(
+            onClick = onClick,
+            modifier = modifier.heightIn(min = 38.dp),
+            enabled = enabled
+        ) {
+            Text(text, fontFamily = FontFamily.Default, color = MaterialTheme.colorScheme.primary)
+        }
+    } else if (isMiuix()) {
         MxTextButton(
             text = text,
             onClick = onClick,
@@ -386,12 +451,19 @@ fun KIconButton(icon: ImageVector, desc: String, onClick: () -> Unit, modifier: 
 
 @Composable
 fun KRoundIconButton(icon: ImageVector, desc: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val bg = if (isMiuix()) MiuixTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.secondaryContainer
+    val bg = when {
+        isMiuix() -> MiuixTheme.colorScheme.surfaceContainerHigh
+        isGlass() -> glassThin()
+        else -> MaterialTheme.colorScheme.secondaryContainer
+    }
     Box(
         modifier
             .size(34.dp)
             .clip(CircleShape)
-            .background(bg)
+            .then(
+                if (isGlass()) Modifier.liquidGlass(CircleShape, bg)
+                else Modifier.background(bg)
+            )
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
@@ -399,7 +471,11 @@ fun KRoundIconButton(icon: ImageVector, desc: String, onClick: () -> Unit, modif
             icon,
             desc,
             Modifier.size(18.dp),
-            tint = if (isMiuix()) MiuixTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSecondaryContainer
+            tint = when {
+                isMiuix() -> MiuixTheme.colorScheme.onSurface
+                isGlass() -> MaterialTheme.colorScheme.onSurface
+                else -> MaterialTheme.colorScheme.onSecondaryContainer
+            }
         )
     }
 }
@@ -420,7 +496,12 @@ fun KSlider(
 
 @Composable
 fun KDivider(modifier: Modifier = Modifier, start: Dp = 0.dp) {
-    if (isMiuix()) {
+    if (isGlass()) {
+        HorizontalDivider(
+            modifier.padding(start = start),
+            color = if (glassDark()) Color.White.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.07f)
+        )
+    } else if (isMiuix()) {
         MxDivider(modifier.padding(start = start), color = MiuixTheme.colorScheme.dividerLine.copy(alpha = 0.6f))
     } else {
         HorizontalDivider(modifier.padding(start = start), color = MaterialTheme.colorScheme.outlineVariant)
@@ -440,6 +521,10 @@ fun KScaffold(
     bottomFallback: Dp = 84.dp,
     content: @Composable (PaddingValues) -> Unit
 ) {
+    if (isGlass()) {
+        LiquidScaffold(topBar, topContent, bottomBar, fab, topFallback, bottomFallback, content)
+        return
+    }
     val haze = remember { HazeState() }
     var topPx by remember { mutableIntStateOf(0) }
     var botPx by remember { mutableIntStateOf(0) }
@@ -617,7 +702,17 @@ fun KFab(
     desc: String,
     modifier: Modifier = Modifier
 ) {
-    if (isMiuix()) {
+    if (isGlass()) {
+        Box(
+            modifier
+                .size(56.dp)
+                .liquidGlass(CircleShape, MaterialTheme.colorScheme.primary.copy(alpha = 0.92f))
+                .clickable { onClick() },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, desc, tint = MaterialTheme.colorScheme.onPrimary)
+        }
+    } else if (isMiuix()) {
         MxFab(
             onClick = onClick,
             modifier = modifier,
@@ -645,7 +740,9 @@ fun KDialog(
     content: @Composable ColumnScope.() -> Unit,
     buttons: @Composable RowScope.() -> Unit
 ) {
-    if (isMiuix()) {
+    if (isGlass()) {
+        LiquidDialog(title, onDismiss, content, buttons)
+    } else if (isMiuix()) {
         MxOverlayDialog(show = true, title = title, onDismissRequest = onDismiss) {
             Column(
                 Modifier
@@ -681,7 +778,21 @@ fun KDialog(
 
 @Composable
 fun KChip(text: String) {
-    if (isMiuix()) {
+    if (isGlass()) {
+        Row(
+            Modifier
+                .clip(RoundedCornerShape(50))
+                .liquidGlass(RoundedCornerShape(50), glassThin())
+                .padding(horizontal = 9.dp, vertical = 3.dp)
+        ) {
+            Text(
+                text,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontFamily = FontFamily.Default
+            )
+        }
+    } else if (isMiuix()) {
         Row(
             Modifier
                 .clip(RoundedCornerShape(50))
@@ -728,8 +839,16 @@ fun KRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (icon != null) {
-            val tileBg = if (isMiuix()) MiuixTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.secondaryContainer
-            val tint = if (isMiuix()) MiuixTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSecondaryContainer
+            val tileBg = when {
+                isMiuix() -> MiuixTheme.colorScheme.surfaceContainerHigh
+                isGlass() -> glassThin()
+                else -> MaterialTheme.colorScheme.secondaryContainer
+            }
+            val tint = when {
+                isMiuix() -> MiuixTheme.colorScheme.onSurface
+                isGlass() -> MaterialTheme.colorScheme.onSurface
+                else -> MaterialTheme.colorScheme.onSecondaryContainer
+            }
             Row(
                 Modifier
                     .size(32.dp)
@@ -788,8 +907,16 @@ fun KSwitchRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (icon != null) {
-            val tileBg = if (isMiuix()) MiuixTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.secondaryContainer
-            val tint = if (isMiuix()) MiuixTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSecondaryContainer
+            val tileBg = when {
+                isMiuix() -> MiuixTheme.colorScheme.surfaceContainerHigh
+                isGlass() -> glassThin()
+                else -> MaterialTheme.colorScheme.secondaryContainer
+            }
+            val tint = when {
+                isMiuix() -> MiuixTheme.colorScheme.onSurface
+                isGlass() -> MaterialTheme.colorScheme.onSurface
+                else -> MaterialTheme.colorScheme.onSecondaryContainer
+            }
             Row(
                 Modifier
                     .size(32.dp)
@@ -833,19 +960,24 @@ fun KChoiceChip(text: String, selected: Boolean, onClick: () -> Unit, modifier: 
         selected && isMiuix() -> MiuixTheme.colorScheme.primary
         selected -> MaterialTheme.colorScheme.primary
         isMiuix() -> MiuixTheme.colorScheme.surfaceContainerHigh
+        isGlass() -> glassThin()
         else -> MaterialTheme.colorScheme.secondaryContainer
     }
     val fg = when {
         selected && isMiuix() -> MiuixTheme.colorScheme.onPrimary
         selected -> MaterialTheme.colorScheme.onPrimary
         isMiuix() -> MiuixTheme.colorScheme.onSurface
+        isGlass() -> MaterialTheme.colorScheme.onSurface
         else -> MaterialTheme.colorScheme.onSecondaryContainer
     }
     Box(
         modifier
             .height(34.dp)
             .clip(RoundedCornerShape(50))
-            .background(bg)
+            .then(
+                if (isGlass() && !selected) Modifier.liquidGlass(RoundedCornerShape(50), bg)
+                else Modifier.background(bg)
+            )
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
@@ -864,9 +996,12 @@ fun KSwitchCell(
         modifier
             .height(42.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(
-                if (isMiuix()) MiuixTheme.colorScheme.surfaceContainerHigh
-                else MaterialTheme.colorScheme.surfaceContainerHigh
+            .then(
+                if (isGlass()) Modifier.liquidGlass(RoundedCornerShape(12.dp), glassThin())
+                else Modifier.background(
+                    if (isMiuix()) MiuixTheme.colorScheme.surfaceContainerHigh
+                    else MaterialTheme.colorScheme.surfaceContainerHigh
+                )
             )
             .padding(horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically
