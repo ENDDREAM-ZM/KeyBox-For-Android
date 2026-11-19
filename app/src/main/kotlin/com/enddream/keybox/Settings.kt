@@ -41,6 +41,7 @@ import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Storage
 import androidx.compose.material.icons.rounded.VerticalAlignBottom
+import androidx.compose.material.icons.rounded.VerticalAlignTop
 import androidx.compose.material.icons.rounded.VerifiedUser
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -348,8 +349,19 @@ fun SettingsScreen(
             )
             KDivider(Modifier.padding(start = 56.dp))
             KSwitchRow(
+                title = "悬浮顶栏",
+                subtitle = "顶栏以圆角面板悬浮在页面之上",
+                icon = Icons.Rounded.VerticalAlignTop,
+                checked = ChromeState.floatingTop,
+                onChange = {
+                    ChromeState.floatingTop = it
+                    Prefs.setFloatingTop(ctx, it)
+                }
+            )
+            KDivider(Modifier.padding(start = 56.dp))
+            KSwitchRow(
                 title = "悬浮底栏",
-                subtitle = "底栏以胶囊形式悬浮，留出页面边缘",
+                subtitle = "底栏以胶囊形式悬浮",
                 icon = Icons.Rounded.VerticalAlignBottom,
                 checked = ChromeState.floating,
                 onChange = {
