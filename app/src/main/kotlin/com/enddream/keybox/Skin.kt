@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -84,10 +85,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.HazeTint
-import dev.chrisbanes.haze.hazeEffect
-import dev.chrisbanes.haze.hazeSource
 import top.yukonga.miuix.kmp.basic.Button as MxButton
 import top.yukonga.miuix.kmp.basic.ButtonDefaults as MxButtonDefaults
 import top.yukonga.miuix.kmp.basic.Card as MxCard
@@ -528,7 +525,6 @@ fun KDivider(modifier: Modifier = Modifier, start: Dp = 0.dp) {
     }
 }
 
-val LocalHaze = androidx.compose.runtime.compositionLocalOf<HazeState?> { null }
 val LocalChromeTop = androidx.compose.runtime.compositionLocalOf<Dp> { 0.dp }
 
 @Composable
@@ -545,7 +541,6 @@ fun KScaffold(
         LiquidScaffold(topBar, topContent, bottomBar, fab, topFallback, bottomFallback, content)
         return
     }
-    val haze = remember { HazeState() }
     var topPx by remember { mutableIntStateOf(0) }
     var botPx by remember { mutableIntStateOf(0) }
     val density = LocalDensity.current
@@ -557,33 +552,45 @@ fun KScaffold(
 
     Box(Modifier.fillMaxSize().background(bg)) {
         CompositionLocalProvider(
-            LocalHaze provides haze,
             LocalTopInset provides topDp,
             LocalChromeTop provides topDp,
             LocalBottomInset provides botDp
         ) {
             Box(Modifier.fillMaxSize()) {
-                Box(Modifier.fillMaxSize().hazeSource(haze)) {
+                Box(Modifier.fillMaxSize()) {
                     content(PaddingValues(0.dp))
                 }
             }
         }
+        val topShape = if (ChromeState.floatingTop) RoundedCornerShape(26.dp) else RectangleShape
         Box(
             Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
                 .onSizeChanged { topPx = it.height }
-                .hazeEffect(haze) {
-                    backgroundColor = barTint.copy(alpha = 0.55f)
-                    blurRadius = 24.dp
-                    noiseFactor = 0.02f
-                    fallbackTint = HazeTint(barTint.copy(alpha = 0.94f), BlendMode.SrcOver)
-                }
+                .then(
+                    if (ChromeState.floatingTop) Modifier
+                        .padding(start = 12.dp, end = 12.dp, top = 8.dp)
+                        .statusBarsPadding()
+                    else Modifier
+                )
+                .then(
+                    if (ChromeState.floatingTop) Modifier.border(
+                        1.dp,
+                        if (isMiuix()) MiuixTheme.colorScheme.dividerLine.copy(alpha = 0.5f)
+                        else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+                        topShape
+                    ) else Modifier
+                )
+                .clip(topShape)
+                .background(barTint)
         ) {
-            Column {
-                topBar()
-                if (BannerState.visible) MasterBannerStrip()
-                topContent()
+            Box(Modifier.consumeWindowInsets(WindowInsets.statusBars)) {
+                Column {
+                    topBar()
+                    if (BannerState.visible) MasterBannerStrip()
+                    topContent()
+                }
             }
         }
         Box(
@@ -600,17 +607,13 @@ fun KScaffold(
                 .then(
                     if (ChromeState.floating) Modifier.border(
                         1.dp,
-                        barTint.copy(alpha = 0.40f),
+                        if (isMiuix()) MiuixTheme.colorScheme.dividerLine.copy(alpha = 0.5f)
+                        else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
                         RoundedCornerShape(50)
                     ) else Modifier
                 )
                 .clip(if (ChromeState.floating) RoundedCornerShape(50) else RectangleShape)
-                .hazeEffect(haze) {
-                    backgroundColor = barTint.copy(alpha = if (ChromeState.floating) 0.74f else 0.55f)
-                    blurRadius = 24.dp
-                    noiseFactor = 0.02f
-                    fallbackTint = HazeTint(barTint.copy(alpha = 0.96f), BlendMode.SrcOver)
-                }
+                .background(barTint)
         ) {
             Box(Modifier.consumeWindowInsets(WindowInsets.navigationBars)) { bottomBar() }
         }
