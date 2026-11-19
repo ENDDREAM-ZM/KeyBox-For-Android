@@ -34,7 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -69,19 +69,19 @@ fun glassDark(): Boolean = MaterialTheme.colorScheme.surface.luminance() < 0.5f
 @Composable
 fun glassSurface(): Color {
     val d = glassDark()
-    return if (d) Color(0xFF1C1C1E).copy(alpha = 0.40f) else Color.White.copy(alpha = 0.42f)
+    return if (d) Color(0xFF1C1C1E).copy(alpha = 0.38f) else Color.White.copy(alpha = 0.30f)
 }
 
 @Composable
 fun glassSurfaceStrong(): Color {
     val d = glassDark()
-    return if (d) Color(0xFF1C1C1E).copy(alpha = 0.58f) else Color.White.copy(alpha = 0.62f)
+    return if (d) Color(0xFF1C1C1E).copy(alpha = 0.62f) else Color.White.copy(alpha = 0.52f)
 }
 
 @Composable
 fun glassThin(): Color {
     val d = glassDark()
-    return if (d) Color(0xFF1C1C1E).copy(alpha = 0.26f) else Color.White.copy(alpha = 0.30f)
+    return if (d) Color(0xFF1C1C1E).copy(alpha = 0.30f) else Color.White.copy(alpha = 0.24f)
 }
 
 @Composable
@@ -131,42 +131,38 @@ fun Modifier.liquidGlassBar(shape: Shape, tint: Color, backdrop: LayerBackdrop?)
 fun GlassWallpaper(modifier: Modifier = Modifier) {
     val dark = glassDark()
     val base = if (dark) {
-        Brush.verticalGradient(listOf(Color(0xFF17171A), Color(0xFF07070A)))
+        Brush.verticalGradient(listOf(Color(0xFF2A2A2F), Color(0xFF08080A)))
     } else {
-        Brush.verticalGradient(listOf(Color(0xFFFCFCFD), Color(0xFFE3E3E8)))
+        Brush.verticalGradient(listOf(Color(0xFFFFFFFF), Color(0xFFC9C9D2)))
     }
-    val spots = if (dark) {
-        listOf(
-            Triple(0.16f, 0.10f, Color.White.copy(alpha = 0.06f)),
-            Triple(0.84f, 0.28f, Color.White.copy(alpha = 0.05f)),
-            Triple(0.52f, 0.88f, Color.White.copy(alpha = 0.045f))
-        )
-    } else {
-        listOf(
-            Triple(0.16f, 0.10f, Color.White),
-            Triple(0.84f, 0.28f, Color(0xFFEBEBF0)),
-            Triple(0.52f, 0.88f, Color(0xFFF2F2F6))
-        )
-    }
+    val blobs = if (dark) listOf(
+        Triple(0.08f, 0.04f, Color.White.copy(alpha = 0.13f)),
+        Triple(0.95f, 0.20f, Color.White.copy(alpha = 0.09f)),
+        Triple(0.30f, 0.58f, Color.White.copy(alpha = 0.06f)),
+        Triple(0.85f, 0.96f, Color.Black.copy(alpha = 0.45f))
+    ) else listOf(
+        Triple(0.08f, 0.04f, Color.White),
+        Triple(0.95f, 0.20f, Color(0xFFEDEDF1)),
+        Triple(0.30f, 0.58f, Color(0xFFF8F8FA)),
+        Triple(0.85f, 0.96f, Color(0xFFB2B2BD))
+    )
     Box(
         modifier
             .fillMaxSize()
-            .drawWithCache {
-                onDrawBehind {
-                    drawRect(base)
-                    spots.forEach { (fx, fy, c) ->
-                        val center = Offset(size.width * fx, size.height * fy)
-                        val radius = size.maxDimension * 0.55f
-                        drawCircle(
-                            brush = Brush.radialGradient(
-                                listOf(c, Color.Transparent),
-                                center = center,
-                                radius = radius
-                            ),
-                            radius = radius,
-                            center = center
-                        )
-                    }
+            .background(base)
+            .drawBehind {
+                blobs.forEach { (fx, fy, c) ->
+                    val center = Offset(size.width * fx, size.height * fy)
+                    val radius = size.maxDimension * 0.50f
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            listOf(c, Color.Transparent),
+                            center = center,
+                            radius = radius
+                        ),
+                        radius = radius,
+                        center = center
+                    )
                 }
             }
     )
