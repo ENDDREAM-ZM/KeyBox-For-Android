@@ -4,7 +4,7 @@ plugins {
     id 'org.jetbrains.compose'
 }
 
-def appVersionCode = 400
+def appVersionCode = 410
 def appVersionStep = (int) (appVersionCode / 10)
 def appVersionName = "1.${(int) (appVersionStep / 10)}.${appVersionStep % 10}"
 
