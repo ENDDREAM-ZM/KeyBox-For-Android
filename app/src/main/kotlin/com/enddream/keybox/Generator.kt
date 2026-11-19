@@ -68,9 +68,9 @@ private fun LenInput(value: String, onChange: (String) -> Unit) {
             .clip(RoundedCornerShape(12.dp))
             .then(
                 if (isGlass()) Modifier.liquidGlass(RoundedCornerShape(12.dp), glassThin())
-                else Modifier.background(bg)
-            )
-            .border(1.dp, line.copy(alpha = if (isGlass()) 0.25f else 1f), RoundedCornerShape(12.dp)),
+                    .border(1.dp, line.copy(alpha = 0.22f), RoundedCornerShape(12.dp))
+                else Modifier.background(bg).border(1.dp, line, RoundedCornerShape(12.dp))
+            ),
         contentAlignment = Alignment.Center
     ) {
         BasicTextField(
@@ -99,9 +99,9 @@ private fun ResultBox(text: String, modifier: Modifier = Modifier, mono: Boolean
             .clip(RoundedCornerShape(12.dp))
             .then(
                 if (isGlass()) Modifier.liquidGlass(RoundedCornerShape(12.dp), glassThin())
-                else Modifier.background(bg)
+                    .border(1.dp, line.copy(alpha = 0.22f), RoundedCornerShape(12.dp))
+                else Modifier.background(bg).border(1.dp, line, RoundedCornerShape(12.dp))
             )
-            .border(1.dp, line.copy(alpha = if (isGlass()) 0.25f else 1f), RoundedCornerShape(12.dp))
             .horizontalScroll(rememberScrollState())
             .padding(horizontal = 12.dp),
         contentAlignment = Alignment.CenterStart
