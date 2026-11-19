@@ -599,7 +599,7 @@ fun MainScaffold(
                 KTopBar(
                     title = "KeyBox",
                     subtitle = yiyan.ifEmpty { null },
-                    actions = { KIconButton(Icons.Rounded.Lock, "锁定", onLock) }
+                    actions = { KSmallIconButton(Icons.Rounded.Lock, "锁定", onLock) }
                 )
             }
         },        topContent = {
@@ -1012,20 +1012,46 @@ fun SearchRow(
         Row(
             Modifier
                 .fillMaxWidth()
-                .padding(start = 16.dp, end = 4.dp, top = 2.dp, bottom = 2.dp),
+                .padding(
+                    start = if (ChromeState.floatingTop) 8.dp else 12.dp,
+                    end = if (ChromeState.floatingTop) 2.dp else 6.dp,
+                    top = 4.dp,
+                    bottom = 4.dp
+                ),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            KField(
-                value = q,
-                onChange = onQ,
-                label = placeholder,
-                modifier = Modifier.weight(1f),
-                asPlaceholder = true,
-                bare = ChromeState.floatingTop,
-                cornerRadius = 50.dp
-            )
-            KIconButton(Icons.Rounded.FilterList, "筛选", onFilter)
-            KIconButton(
+            Box(
+                Modifier
+                    .weight(1f)
+                    .height(38.dp)
+                    .clip(RoundedCornerShape(50))
+                    .then(
+                        when {
+                            isGlass() -> Modifier.liquidGlass(RoundedCornerShape(50), glassThin())
+                            isMiuix() -> Modifier.background(
+                                MiuixTheme.colorScheme.surfaceContainerHigh,
+                                RoundedCornerShape(50)
+                            )
+                            else -> Modifier.background(
+                                MaterialTheme.colorScheme.surfaceContainerHigh,
+                                RoundedCornerShape(50)
+                            )
+                        }
+                    ),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                KField(
+                    value = q,
+                    onChange = onQ,
+                    label = placeholder,
+                    modifier = Modifier.fillMaxWidth(),
+                    asPlaceholder = true,
+                    bare = true
+                )
+            }
+            Spacer(Modifier.width(2.dp))
+            KSmallIconButton(Icons.Rounded.FilterList, "筛选", onFilter)
+            KSmallIconButton(
                 if (selecting) Icons.Rounded.Close else Icons.Rounded.Checklist,
                 if (selecting) "退出多选" else "多选",
                 onToggleSelect

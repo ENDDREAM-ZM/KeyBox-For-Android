@@ -78,19 +78,19 @@ fun glassDark(): Boolean = MaterialTheme.colorScheme.surface.luminance() < 0.5f
 @Composable
 fun glassSurface(): Color {
     val d = glassDark()
-    return if (d) Color(0xFF1C1C1E).copy(alpha = 0.38f) else Color.White.copy(alpha = 0.30f)
+    return if (d) Color(0xFF1C1C1E).copy(alpha = 0.46f) else Color.White.copy(alpha = 0.44f)
 }
 
 @Composable
 fun glassSurfaceStrong(): Color {
     val d = glassDark()
-    return if (d) Color(0xFF1C1C1E).copy(alpha = 0.62f) else Color.White.copy(alpha = 0.52f)
+    return if (d) Color(0xFF1C1C1E).copy(alpha = 0.74f) else Color.White.copy(alpha = 0.74f)
 }
 
 @Composable
 fun glassThin(): Color {
     val d = glassDark()
-    return if (d) Color(0xFF1C1C1E).copy(alpha = 0.30f) else Color.White.copy(alpha = 0.24f)
+    return if (d) Color(0xFF1C1C1E).copy(alpha = 0.42f) else Color.White.copy(alpha = 0.40f)
 }
 
 @Composable
@@ -104,7 +104,7 @@ fun Modifier.liquidGlass(
     shape: Shape,
     tint: Color,
     backdrop: LayerBackdrop? = LocalGlassWall.current,
-    blurSize: Dp = 14.dp,
+    blurSize: Dp = 20.dp,
     refraction: Dp = 8.dp
 ): Modifier {
     if (backdrop == null || Build.VERSION.SDK_INT < 31) return this.background(tint, shape)
@@ -129,7 +129,7 @@ fun Modifier.liquidGlassBar(shape: Shape, tint: Color, backdrop: LayerBackdrop?)
         shape = { shape },
         effects = {
             vibrancy()
-            blur(22.dp.toPx())
+            blur(34.dp.toPx())
         },
         highlight = { Highlight.Plain },
         onDrawSurface = { drawRect(tint) }
@@ -142,7 +142,7 @@ fun GlassWallpaper(modifier: Modifier = Modifier) {
     val base = if (dark) {
         Brush.verticalGradient(listOf(Color(0xFF2A2A2A), Color(0xFF0F0F0F)))
     } else {
-        Brush.verticalGradient(listOf(Color(0xFFFFFFFF), Color(0xFFC9C9C9)))
+        Brush.verticalGradient(listOf(Color(0xFFFFFFFF), Color(0xFFF2F2F2)))
     }
     val blobs = if (dark) listOf(
         Triple(0.08f, 0.04f, Color.White.copy(alpha = 0.12f)),
@@ -151,9 +151,9 @@ fun GlassWallpaper(modifier: Modifier = Modifier) {
         Triple(0.85f, 0.96f, Color.Black.copy(alpha = 0.45f))
     ) else listOf(
         Triple(0.08f, 0.04f, Color.White),
-        Triple(0.95f, 0.20f, Color(0xFFEDEDED)),
-        Triple(0.30f, 0.58f, Color(0xFFF8F8F8)),
-        Triple(0.85f, 0.96f, Color(0xFFB2B2B2))
+        Triple(0.95f, 0.20f, Color(0xFFFAFAFA)),
+        Triple(0.30f, 0.58f, Color(0xFFFCFCFC)),
+        Triple(0.85f, 0.96f, Color(0xFFE4E4E4))
     )
     Box(
         modifier
@@ -230,14 +230,14 @@ fun LiquidScaffold(
                     .then(
                         if (ChromeState.floatingTop) Modifier
                             .statusBarsPadding()
-                            .padding(top = 8.dp)
+                            .padding(top = 6.dp)
                         else Modifier
                             .liquidGlassBar(RectangleShape, glassSurfaceStrong(), contentLayer)
                             .statusBarsPadding()
                     )
             ) {
                 Box(Modifier.consumeWindowInsets(WindowInsets.statusBars)) {
-                    Column(verticalArrangement = Arrangement.spacedBy(if (ChromeState.floatingTop) 8.dp else 0.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(if (ChromeState.floatingTop) 6.dp else 0.dp)) {
                         topBar()
                         if (BannerState.visible) MasterBannerStrip()
                         topContent()

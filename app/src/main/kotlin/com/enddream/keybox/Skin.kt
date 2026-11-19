@@ -3,6 +3,7 @@ package com.enddream.keybox
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -73,6 +74,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.TextStyle
@@ -337,13 +339,13 @@ fun KField(
 ) {
     if (bare) {
         Box(
-            modifier.height(40.dp),
+            modifier.height(38.dp),
             contentAlignment = Alignment.CenterStart
         ) {
             BasicTextField(
                 value = value,
                 onValueChange = onChange,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+                modifier = Modifier.fillMaxWidth().padding(start = 14.dp, end = 4.dp),
                 enabled = enabled,
                 readOnly = readOnly,
                 singleLine = singleLine,
@@ -474,7 +476,7 @@ fun KButton(
                 .heightIn(min = 38.dp)
                 .liquidGlass(
                     RoundedCornerShape(50),
-                    if (primary) MaterialTheme.colorScheme.primary.copy(alpha = 0.92f) else glassSurfaceStrong()
+                    if (primary) MaterialTheme.colorScheme.primary.copy(alpha = 0.66f) else glassSurfaceStrong()
                 )
                 .clickable(enabled = enabled) { onClick() }
                 .padding(horizontal = if (dense) 8.dp else 16.dp, vertical = 8.dp),
@@ -669,14 +671,14 @@ fun KScaffold(
                 .then(
                     if (ChromeState.floatingTop) Modifier
                         .statusBarsPadding()
-                        .padding(top = 8.dp)
+                        .padding(top = 6.dp)
                     else Modifier
                         .background(barTint)
                         .statusBarsPadding()
                 )
         ) {
             Box(Modifier.consumeWindowInsets(WindowInsets.statusBars)) {
-                Column(verticalArrangement = Arrangement.spacedBy(if (ChromeState.floatingTop) 8.dp else 0.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(if (ChromeState.floatingTop) 6.dp else 0.dp)) {
                     topBar()
                     if (BannerState.visible) MasterBannerStrip()
                     topContent()
@@ -727,30 +729,31 @@ fun KTopBar(
     actions: @Composable RowScope.() -> Unit = {}
 ) {
     val floating = ChromeState.floatingTop
+    val titleStyle = if (isMiuix()) MiuixTheme.textStyles.title2.copy(fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+    else mdStyle(Txt.Title2).copy(fontSize = 17.sp)
     KBarSurface {
         Column(
             Modifier
                 .fillMaxWidth()
                 .padding(
-                    start = if (floating) 22.dp else 16.dp,
-                    end = if (floating) 8.dp else 6.dp,
-                    top = if (floating) 8.dp else 6.dp,
-                    bottom = if (floating) 8.dp else 8.dp
+                    start = if (floating) 18.dp else 16.dp,
+                    end = if (floating) 4.dp else 4.dp,
+                    top = if (floating) 5.dp else 4.dp,
+                    bottom = if (floating) 5.dp else 6.dp
                 )
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (onBack != null) {
-                    if (isMiuix()) {
-                        MxIconButton(onClick = onBack) {
-                            Icon(Icons.Rounded.ArrowBack, "返回", tint = MiuixTheme.colorScheme.onSurface)
-                        }
-                    } else {
-                        Box(
-                            Modifier.size(34.dp).clickable { onBack() },
-                            contentAlignment = Alignment.CenterStart
-                        ) {
-                            Icon(Icons.Rounded.ArrowBack, "返回", tint = MaterialTheme.colorScheme.onSurface)
-                        }
+                    Box(
+                        Modifier.size(30.dp).clickable { onBack() },
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        Icon(
+                            Icons.Rounded.ArrowBack,
+                            "返回",
+                            Modifier.size(20.dp),
+                            tint = if (isMiuix()) MiuixTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface
+                        )
                     }
                     Spacer(Modifier.width(4.dp))
                 }
@@ -758,7 +761,7 @@ fun KTopBar(
                     MxText(
                         title,
                         modifier = Modifier.weight(1f),
-                        style = MiuixTheme.textStyles.title2,
+                        style = titleStyle,
                         color = MiuixTheme.colorScheme.onSurface,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -767,7 +770,7 @@ fun KTopBar(
                     Text(
                         title,
                         modifier = Modifier.weight(1f),
-                        style = mdStyle(Txt.Title2),
+                        style = titleStyle,
                         fontFamily = FontFamily.Default,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -776,7 +779,7 @@ fun KTopBar(
                 actions()
             }
             if (!subtitle.isNullOrEmpty()) {
-                Spacer(Modifier.height(if (floating) 1.dp else 2.dp))
+                Spacer(Modifier.height(1.dp))
                 if (isMiuix()) {
                     MxText(
                         subtitle,
@@ -803,29 +806,72 @@ fun KTopBar(
 }
 
 @Composable
+fun KSmallIconButton(icon: ImageVector, desc: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Box(
+        modifier.size(34.dp).clip(CircleShape).clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            icon,
+            desc,
+            Modifier.size(21.dp),
+            tint = if (isMiuix()) MiuixTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
+@Composable
 fun KNavBar(items: List<Triple<String, ImageVector, Int>>, selected: Int, onSelect: (Int) -> Unit) {
-    if (isMiuix()) {
-        MxNavigationBar(color = Color.Transparent) {
-            items.forEach { (label, icon, idx) ->
-                MxNavigationBarItem(
-                    selected = selected == idx,
-                    onClick = { onSelect(idx) },
-                    icon = icon,
-                    label = label
-                )
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .barSwipe(items.size, selected, onSelect)
+    ) {
+        if (isMiuix()) {
+            MxNavigationBar(color = Color.Transparent) {
+                items.forEach { (label, icon, idx) ->
+                    MxNavigationBarItem(
+                        selected = selected == idx,
+                        onClick = { onSelect(idx) },
+                        icon = icon,
+                        label = label
+                    )
+                }
+            }
+        } else {
+            NavigationBar(containerColor = Color.Transparent) {
+                items.forEach { (label, icon, idx) ->
+                    NavigationBarItem(
+                        selected = selected == idx,
+                        onClick = { onSelect(idx) },
+                        icon = { Icon(icon, null) },
+                        label = { Text(label, fontFamily = FontFamily.Default) }
+                    )
+                }
             }
         }
-    } else {
-        NavigationBar(containerColor = Color.Transparent) {
-            items.forEach { (label, icon, idx) ->
-                NavigationBarItem(
-                    selected = selected == idx,
-                    onClick = { onSelect(idx) },
-                    icon = { Icon(icon, null) },
-                    label = { Text(label, fontFamily = FontFamily.Default) }
-                )
-            }
-        }
+    }
+}
+
+private fun Modifier.barSwipe(count: Int, current: Int, onSelect: (Int) -> Unit): Modifier {
+    return this.pointerInput(count, current) {
+        var total = 0f
+        detectDragGesturesAfterLongPress(
+            onDragStart = { total = 0f },
+            onDrag = { change, drag ->
+                total += drag.x
+                change.consume()
+            },
+            onDragEnd = {
+                val limit = 40.dp.toPx()
+                when {
+                    total <= -limit && current < count - 1 -> onSelect(current + 1)
+                    total >= limit && current > 0 -> onSelect(current - 1)
+                }
+                total = 0f
+            },
+            onDragCancel = { total = 0f }
+        )
     }
 }
 
@@ -844,7 +890,10 @@ fun KFloatingNavBar(items: List<Triple<String, ImageVector, Int>>, selected: Int
         else -> MaterialTheme.colorScheme.onPrimaryContainer
     }
     Row(
-        Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
+        Modifier
+            .fillMaxWidth()
+            .barSwipe(items.size, selected, onSelect)
+            .padding(horizontal = 8.dp, vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -883,7 +932,7 @@ fun KFab(
         Box(
             modifier
                 .size(56.dp)
-                .liquidGlass(CircleShape, MaterialTheme.colorScheme.primary.copy(alpha = 0.92f))
+                .liquidGlass(CircleShape, MaterialTheme.colorScheme.primary.copy(alpha = 0.66f))
                 .clickable { onClick() },
             contentAlignment = Alignment.Center
         ) {
