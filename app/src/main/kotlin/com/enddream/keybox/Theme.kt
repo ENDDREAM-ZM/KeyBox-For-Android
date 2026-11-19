@@ -27,7 +27,7 @@ import top.yukonga.miuix.kmp.theme.darkColorScheme as miuixDark
 import top.yukonga.miuix.kmp.theme.defaultTextStyles
 import top.yukonga.miuix.kmp.theme.lightColorScheme as miuixLight
 
-enum class UiStyle { Material, Miuix }
+enum class UiStyle { Material, Miuix, Liquid }
 
 val PresetSeeds = intArrayOf(
     0xFF006A60.toInt(), 0xFF3482FF.toInt(), 0xFF7C4DFF.toInt(), 0xFFD81B60.toInt(),
