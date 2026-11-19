@@ -803,15 +803,10 @@ fun EntryListScreen(
         }.sortedWith(compareByDescending<Entry> { it.fav }.thenBy { it.title })
     }
 
-    val cardModifier = if (isGlass()) {
-        Modifier
-            .fillMaxSize()
-            .padding(horizontal = 12.dp)
-            .liquidGlass(RoundedCornerShape(24.dp), glassSurface())
-    } else {
-        Modifier.fillMaxSize().padding(horizontal = 12.dp)
-    }
-    Box(cardModifier) {
+    KCard(
+        Modifier.fillMaxSize().padding(horizontal = 12.dp),
+        padding = 0.dp
+    ) {
         if (filtered.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 KText(
@@ -898,16 +893,13 @@ fun EntryActionsDialog(
 
 @Composable
 fun ActionRow(text: String, onClick: () -> Unit) {
-    val bg = when {
-        isGlass() -> glassThin()
-        else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
-    }
+    val bg = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
     Row(
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .then(
-                if (isGlass()) Modifier.liquidGlass(RoundedCornerShape(12.dp), bg)
+                if (isGlass()) Modifier.liquidGlass(RoundedCornerShape(12.dp), glassThin())
                 else Modifier.background(bg)
             )
             .clickable { onClick() }
@@ -969,7 +961,7 @@ fun NoticeBanner(text: String, onClose: () -> Unit, onDontShow: () -> Unit) {
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(if (isGlass()) bg.copy(alpha = 0.82f) else bg)
+            .background(bg)
             .padding(start = 12.dp, end = 4.dp, top = 8.dp, bottom = 6.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
