@@ -3,12 +3,17 @@ package com.enddream.keybox
 import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
@@ -38,6 +43,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.onSizeChanged
@@ -231,8 +237,27 @@ fun LiquidScaffold(
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
                     .onSizeChanged { botPx = it.height }
-                    .liquidGlassBar(RoundedCornerShape(0.dp), glassSurfaceStrong(), contentLayer)
-            ) { bottomBar() }
+                    .then(
+                        if (ChromeState.floating) Modifier
+                            .padding(start = 14.dp, end = 14.dp, bottom = 8.dp)
+                            .navigationBarsPadding()
+                        else Modifier
+                    )
+                    .then(
+                        if (ChromeState.floating) Modifier.border(
+                            1.dp,
+                            Color.White.copy(alpha = if (glassDark()) 0.16f else 0.60f),
+                            RoundedCornerShape(28.dp)
+                        ) else Modifier
+                    )
+                    .liquidGlassBar(
+                        if (ChromeState.floating) RoundedCornerShape(28.dp) else RectangleShape,
+                        glassSurfaceStrong(),
+                        contentLayer
+                    )
+            ) {
+                Box(Modifier.consumeWindowInsets(WindowInsets.navigationBars)) { bottomBar() }
+            }
             Box(
                 Modifier
                     .align(Alignment.BottomEnd)
