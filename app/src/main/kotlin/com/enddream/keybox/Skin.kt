@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -64,6 +67,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -587,13 +591,29 @@ fun KScaffold(
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
                 .onSizeChanged { botPx = it.height }
+                .then(
+                    if (ChromeState.floating) Modifier
+                        .padding(start = 14.dp, end = 14.dp, bottom = 8.dp)
+                        .navigationBarsPadding()
+                    else Modifier
+                )
+                .then(
+                    if (ChromeState.floating) Modifier.border(
+                        1.dp,
+                        barTint.copy(alpha = 0.40f),
+                        RoundedCornerShape(28.dp)
+                    ) else Modifier
+                )
+                .clip(if (ChromeState.floating) RoundedCornerShape(28.dp) else RectangleShape)
                 .hazeEffect(haze) {
-                    backgroundColor = barTint.copy(alpha = 0.55f)
+                    backgroundColor = barTint.copy(alpha = if (ChromeState.floating) 0.74f else 0.55f)
                     blurRadius = 24.dp
                     noiseFactor = 0.02f
-                    fallbackTint = HazeTint(barTint.copy(alpha = 0.94f), BlendMode.SrcOver)
+                    fallbackTint = HazeTint(barTint.copy(alpha = 0.96f), BlendMode.SrcOver)
                 }
-        ) { bottomBar() }
+        ) {
+            Box(Modifier.consumeWindowInsets(WindowInsets.navigationBars)) { bottomBar() }
+        }
         Box(
             Modifier
                 .align(Alignment.BottomEnd)
