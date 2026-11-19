@@ -3,7 +3,8 @@ package com.enddream.keybox
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -74,7 +75,9 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.TextStyle
@@ -732,35 +735,35 @@ fun KTopBar(
     val titleStyle = if (isMiuix()) MiuixTheme.textStyles.title2.copy(fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
     else mdStyle(Txt.Title2).copy(fontSize = 17.sp)
     KBarSurface {
-        Column(
+        Row(
             Modifier
                 .fillMaxWidth()
                 .padding(
                     start = if (floating) 18.dp else 16.dp,
-                    end = if (floating) 4.dp else 4.dp,
+                    end = if (floating) 8.dp else 6.dp,
                     top = if (floating) 5.dp else 4.dp,
                     bottom = if (floating) 5.dp else 6.dp
-                )
+                ),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (onBack != null) {
-                    Box(
-                        Modifier.size(30.dp).clickable { onBack() },
-                        contentAlignment = Alignment.CenterStart
-                    ) {
-                        Icon(
-                            Icons.Rounded.ArrowBack,
-                            "返回",
-                            Modifier.size(20.dp),
-                            tint = if (isMiuix()) MiuixTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    Spacer(Modifier.width(4.dp))
+            if (onBack != null) {
+                Box(
+                    Modifier.size(30.dp).clickable { onBack() },
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    Icon(
+                        Icons.Rounded.ArrowBack,
+                        "返回",
+                        Modifier.size(20.dp),
+                        tint = if (isMiuix()) MiuixTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface
+                    )
                 }
+                Spacer(Modifier.width(4.dp))
+            }
+            Column(Modifier.weight(1f)) {
                 if (isMiuix()) {
                     MxText(
                         title,
-                        modifier = Modifier.weight(1f),
                         style = titleStyle,
                         color = MiuixTheme.colorScheme.onSurface,
                         maxLines = 1,
@@ -769,38 +772,35 @@ fun KTopBar(
                 } else {
                     Text(
                         title,
-                        modifier = Modifier.weight(1f),
                         style = titleStyle,
                         fontFamily = FontFamily.Default,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
-                actions()
-            }
-            if (!subtitle.isNullOrEmpty()) {
-                Spacer(Modifier.height(1.dp))
-                if (isMiuix()) {
-                    MxText(
-                        subtitle,
-                        modifier = Modifier.padding(start = if (onBack != null) 4.dp else 0.dp),
-                        style = MiuixTheme.textStyles.footnote2,
-                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                } else {
-                    Text(
-                        subtitle,
-                        modifier = Modifier.padding(start = if (onBack != null) 4.dp else 0.dp),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontFamily = FontFamily.Default,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                if (!subtitle.isNullOrEmpty()) {
+                    Spacer(Modifier.height(1.dp))
+                    if (isMiuix()) {
+                        MxText(
+                            subtitle,
+                            style = MiuixTheme.textStyles.footnote2,
+                            color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    } else {
+                        Text(
+                            subtitle,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontFamily = FontFamily.Default,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
+            Row(verticalAlignment = Alignment.CenterVertically) { actions() }
         }
     }
 }
@@ -855,23 +855,36 @@ fun KNavBar(items: List<Triple<String, ImageVector, Int>>, selected: Int, onSele
 
 private fun Modifier.barSwipe(count: Int, current: Int, onSelect: (Int) -> Unit): Modifier {
     return this.pointerInput(count, current) {
-        var total = 0f
-        detectDragGesturesAfterLongPress(
-            onDragStart = { total = 0f },
-            onDrag = { change, drag ->
-                total += drag.x
-                change.consume()
-            },
-            onDragEnd = {
-                val limit = 40.dp.toPx()
+        val limit = 40.dp.toPx()
+        val longPressMs = viewConfiguration.longPressTimeoutMillis
+        val slop = viewConfiguration.touchSlop
+        awaitEachGesture {
+            val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+            var held = false
+            var total = 0f
+            while (true) {
+                val event = awaitPointerEvent(PointerEventPass.Initial)
+                val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                if (!held) {
+                    if (change.uptimeMillis - down.uptimeMillis >= longPressMs) {
+                        held = true
+                    } else if (kotlin.math.abs(change.position.x - down.position.x) > slop) {
+                        break
+                    }
+                }
+                if (held) {
+                    if (change.pressed) total += change.positionChange().x
+                    change.consume()
+                }
+                if (!change.pressed) break
+            }
+            if (held) {
                 when {
                     total <= -limit && current < count - 1 -> onSelect(current + 1)
                     total >= limit && current > 0 -> onSelect(current - 1)
                 }
-                total = 0f
-            },
-            onDragCancel = { total = 0f }
-        )
+            }
+        }
     }
 }
 

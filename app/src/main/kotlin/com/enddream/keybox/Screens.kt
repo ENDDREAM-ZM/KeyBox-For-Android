@@ -1032,8 +1032,9 @@ fun SearchRow(
                                 MiuixTheme.colorScheme.surfaceContainerHigh,
                                 RoundedCornerShape(50)
                             )
-                            else -> Modifier.background(
-                                MaterialTheme.colorScheme.surfaceContainerHigh,
+                            else -> Modifier.border(
+                                1.dp,
+                                MaterialTheme.colorScheme.outlineVariant,
                                 RoundedCornerShape(50)
                             )
                         }

@@ -78,19 +78,25 @@ fun glassDark(): Boolean = MaterialTheme.colorScheme.surface.luminance() < 0.5f
 @Composable
 fun glassSurface(): Color {
     val d = glassDark()
-    return if (d) Color(0xFF1C1C1E).copy(alpha = 0.46f) else Color.White.copy(alpha = 0.44f)
+    return if (d) Color(0xFF1C1C1E).copy(alpha = 0.62f) else Color.White.copy(alpha = 0.62f)
 }
 
 @Composable
 fun glassSurfaceStrong(): Color {
     val d = glassDark()
-    return if (d) Color(0xFF1C1C1E).copy(alpha = 0.74f) else Color.White.copy(alpha = 0.74f)
+    return if (d) Color(0xFF1C1C1E).copy(alpha = 0.88f) else Color.White.copy(alpha = 0.88f)
 }
 
 @Composable
 fun glassThin(): Color {
     val d = glassDark()
-    return if (d) Color(0xFF1C1C1E).copy(alpha = 0.42f) else Color.White.copy(alpha = 0.40f)
+    return if (d) Color(0xFF1C1C1E).copy(alpha = 0.58f) else Color.White.copy(alpha = 0.56f)
+}
+
+@Composable
+fun glassInset(): Color {
+    val d = glassDark()
+    return if (d) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.06f)
 }
 
 @Composable

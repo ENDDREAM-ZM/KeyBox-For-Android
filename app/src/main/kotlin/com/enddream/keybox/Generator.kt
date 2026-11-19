@@ -76,8 +76,8 @@ private fun LenInput(value: String, onChange: (String) -> Unit) {
             .height(44.dp)
             .clip(RoundedCornerShape(12.dp))
             .then(
-                if (isGlass()) Modifier.liquidGlass(RoundedCornerShape(12.dp), glassThin())
-                    .border(1.dp, line.copy(alpha = 0.22f), RoundedCornerShape(12.dp))
+                if (isGlass()) Modifier.background(glassInset(), RoundedCornerShape(12.dp))
+                    .border(1.dp, glassStroke().copy(alpha = 0.55f), RoundedCornerShape(12.dp))
                 else Modifier.background(bg).border(1.dp, line, RoundedCornerShape(12.dp))
             ),
         contentAlignment = Alignment.Center
@@ -107,8 +107,8 @@ private fun ResultBox(text: String, modifier: Modifier = Modifier, mono: Boolean
             .height(48.dp)
             .clip(RoundedCornerShape(12.dp))
             .then(
-                if (isGlass()) Modifier.liquidGlass(RoundedCornerShape(12.dp), glassThin())
-                    .border(1.dp, line.copy(alpha = 0.22f), RoundedCornerShape(12.dp))
+                if (isGlass()) Modifier.background(glassInset(), RoundedCornerShape(12.dp))
+                    .border(1.dp, glassStroke().copy(alpha = 0.55f), RoundedCornerShape(12.dp))
                 else Modifier.background(bg).border(1.dp, line, RoundedCornerShape(12.dp))
             )
             .horizontalScroll(rememberScrollState())
