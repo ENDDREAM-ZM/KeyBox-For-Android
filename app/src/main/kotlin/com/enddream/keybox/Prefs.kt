@@ -41,7 +41,7 @@ object Prefs {
 
     fun clipboardSeconds(c: Context): Int {
         val v = get(c).getInt("clip_sec", 30)
-        return if (v == 0 || v == 60 || v == 300) v else 30
+        return if (v == 0 || v == 30 || v == 60 || v == 120 || v == 300) v else 30
     }
 
     fun setClipboardSeconds(c: Context, v: Int) = get(c).edit().putInt("clip_sec", v).apply()
