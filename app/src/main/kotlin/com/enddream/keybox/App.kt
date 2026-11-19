@@ -536,6 +536,7 @@ fun EntryIcon(e: Entry, size: Int = 40) {
 
 private val clipHandler = android.os.Handler(android.os.Looper.getMainLooper())
 private var clipToken = 0
+private var clipWatcher: ClipboardManager.OnPrimaryClipChangedListener? = null
 
 fun copyText(c: Context, text: String) {
     val cm = c.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -547,22 +548,36 @@ fun copyText(c: Context, text: String) {
     } catch (t: Throwable) {
     }
     cm.setPrimaryClip(clip)
-    val sec = Prefs.clipboardSeconds(c)
+    clipWatcher?.let { cm.removePrimaryClipChangedListener(it) }
+    clipWatcher = null
     clipToken++
     val my = clipToken
+    val sec = Prefs.clipboardSeconds(c)
     if (sec > 0) {
+        val watcher = ClipboardManager.OnPrimaryClipChangedListener {
+            if (my == clipToken) {
+                clipToken++
+                clipWatcher = null
+            }
+        }
+        clipWatcher = watcher
+        cm.addPrimaryClipChangedListener(watcher)
         clipHandler.postDelayed({
+            cm.removePrimaryClipChangedListener(watcher)
             if (my != clipToken) return@postDelayed
+            clipToken++
+            clipWatcher = null
             try {
                 val cur = cm.primaryClip
-                val s = cur?.getItemAt(0)?.coerceToText(c)?.toString()
-                if (s == text) {
-                    if (android.os.Build.VERSION.SDK_INT >= 28) {
-                        cm.clearPrimaryClip()
-                    } else {
-                        cm.setPrimaryClip(ClipData.newPlainText("", ""))
-                    }
+                if (cur != null) {
+                    val s = cur.getItemAt(0)?.coerceToText(c)?.toString()
+                    if (s != text) return@postDelayed
                 }
+            } catch (t: Throwable) {
+            }
+            try {
+                if (android.os.Build.VERSION.SDK_INT >= 28) cm.clearPrimaryClip()
+                else cm.setPrimaryClip(ClipData.newPlainText("", ""))
             } catch (t: Throwable) {
             }
         }, sec * 1000L)
