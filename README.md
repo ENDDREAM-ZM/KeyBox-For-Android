@@ -21,6 +21,7 @@ An offline password manager for Android. All data stays on your device.
 - Autofill service and accessibility quick fill
 - Biometric unlock, clipboard auto-clear, screenshot blocking
 - Site icons fetched from multiple sources, shared per domain
+- Three materials: Material 3, Miuix, liquid glass
 
 ## Security
 
@@ -41,6 +42,7 @@ Signing is read from `keystore.properties`. Without that file the build produces
 - [Jetpack Compose](https://developer.android.com/jetpack/compose): UI
 - [Miuix](https://github.com/miuix-kotlin-multiplatform/miuix): Miuix skin
 - [Haze](https://github.com/chrisbanes/haze): top and bottom bar blur
+- [Backdrop](https://github.com/Kyant0/AndroidLiquidGlass): liquid glass material
 - [CameraX](https://developer.android.com/media/camera/camerax): QR scanning
 
 ## License
