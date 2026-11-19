@@ -41,7 +41,6 @@
 
 - [Jetpack Compose](https://developer.android.com/jetpack/compose)：界面
 - [Miuix](https://github.com/miuix-kotlin-multiplatform/miuix)：Miuix 皮肤
-- [Haze](https://github.com/chrisbanes/haze)：顶栏底栏模糊
 - [Backdrop](https://github.com/Kyant0/AndroidLiquidGlass)：液态玻璃材质
 - [CameraX](https://developer.android.com/media/camera/camerax)：扫码
 
