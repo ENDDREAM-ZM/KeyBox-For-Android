@@ -42,6 +42,7 @@ import androidx.compose.material.icons.rounded.Apps
 import androidx.compose.material.icons.rounded.Casino
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Checklist
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.GridView
 import androidx.compose.material.icons.rounded.ViewAgenda
 import androidx.compose.material.icons.rounded.Close
@@ -72,7 +73,10 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import com.enddream.keybox.core.Entry
@@ -978,7 +982,12 @@ fun EntryListScreen(
         list.filter { e ->
             (q.isEmpty() || (e.title + e.user + e.primaryUrl() + e.tags + e.pass
                     + e.fields.joinToString(" ") { f -> f.name + " " + f.value }).contains(q, true)) &&
-                    (cat.isEmpty() || (if (cat == "__none__") e.cat.isEmpty() else e.cat == cat))
+                    when {
+                        cat.isEmpty() -> true
+                        cat == "__none__" -> e.cat.isEmpty()
+                        cat == "__fav__" -> e.fav == 1
+                        else -> e.cat == cat
+                    }
         }.sortedWith(compareByDescending<Entry> { it.fav }.thenBy { it.title })
     }
     @Composable
@@ -1162,15 +1171,71 @@ fun ActionRow(text: String, onClick: () -> Unit) {
 
 @Composable
 fun CategoryFilterDialog(cat: String, onPick: (String) -> Unit, onClose: () -> Unit) {
+    val ver = Store.version
     KDialog(
-        title = "按分类筛选",
+        title = "筛选",
         onDismiss = onClose,
         content = {
             FilterRow("全部", cat.isEmpty()) { onPick("") }
+            FilterRow("已收藏", cat == "__fav__") { onPick("__fav__") }
             FilterRow("未分类", cat == "__none__") { onPick("__none__") }
-            Store.vault.cats.forEach { c -> FilterRow(c.name, cat == c.id) { onPick(c.id) } }
+            Store.vault.cats.forEach { c ->
+                FilterRow(c.name, cat == c.id) { onPick(c.id) }
+            }
         },
         buttons = { KTextButton("关闭", onClose, Modifier.weight(1f)) }
+    )
+}
+
+@Composable
+fun CategoryManageDialog(
+    category: com.enddream.keybox.core.Category,
+    onDone: () -> Unit,
+    onDeleted: () -> Unit
+) {
+    val ctx = LocalContext.current
+    var name by remember(category.id) { mutableStateOf(category.name) }
+    var askDelete by remember { mutableStateOf(false) }
+    if (askDelete) {
+        KDialog(
+            title = "删除分类",
+            onDismiss = { askDelete = false },
+            content = {
+                KText(
+                    "删除后「" + category.name + "」里的密码会变成未分类，密码本身不会被删除。",
+                    txt = Txt.Body2
+                )
+            },
+            buttons = {
+                KTextButton("取消", { askDelete = false }, Modifier.weight(1f))
+                KButton("删除", {
+                    askDelete = false
+                    Store.vault.catRemove(category.id)
+                    Store.save(ctx)
+                    onDeleted()
+                }, Modifier.weight(1f))
+            }
+        )
+        return
+    }
+    KDialog(
+        title = "重命名分类",
+        onDismiss = onDone,
+        content = {
+            KField(name, { name = it }, "分类名称", Modifier.fillMaxWidth())
+            Spacer(Modifier.height(8.dp))
+            KTextButton("删除这个分类", { askDelete = true })
+        },
+        buttons = {
+            KTextButton("取消", onDone, Modifier.weight(1f))
+            KButton("保存", {
+                if (name.isNotBlank()) {
+                    Store.vault.catRename(category.id, name)
+                    Store.save(ctx)
+                }
+                onDone()
+            }, Modifier.weight(1f))
+        }
     )
 }
 
@@ -1275,22 +1340,23 @@ fun EntryRow(
     Row(
         Modifier
             .fillMaxWidth()
+
             .combinedClickable(
                 onClick = { if (checked != null) onToggle() else onClick() },
                 onLongClick = { if (checked == null) onLongClick() }
             )
-            .padding(horizontal = 12.dp, vertical = 9.dp),
+            .padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (checked != null) {
             KCheckbox(checked, { onToggle() })
             Spacer(Modifier.width(6.dp))
         }
-        EntryIcon(e)
-        Spacer(Modifier.width(10.dp))
+        EntryIcon(e, 36)
+        Spacer(Modifier.width(8.dp))
         Column(Modifier.weight(1f)) {
             KText(
-                (if (e.fav == 1) "★ " else "") + e.displayTitle(),
+                e.displayTitle() + (if (e.fav == 1) " ★" else ""),
                 txt = Txt.Body1,
                 weight = androidx.compose.ui.text.font.FontWeight.Medium,
                 maxLines = 1,
@@ -1304,14 +1370,73 @@ fun EntryRow(
                 overflow = TextOverflow.Ellipsis
             )
         }
-        if (checked == null) {
-            val cn = Store.vault.catName(e.cat)
-            if (cn.isNotEmpty()) {
-                Spacer(Modifier.width(6.dp))
-                KChip(cn)
+        val tags = entryTags(e)
+        if (tags.isNotEmpty()) {
+            Spacer(Modifier.width(6.dp))
+            TagLines(tags, alignEnd = true)
+        }
+    }
+}
+
+@Composable
+fun TagLines(
+    tags: List<String>,
+    alignEnd: Boolean,
+    perLine: Int = 2,
+    maxTags: Int = 4,
+    maxChip: Dp = 84.dp
+) {
+    val lines = tags.take(maxTags).chunked(perLine)
+    val gap = 3.dp
+    Layout(
+        content = {
+            lines.forEach { line ->
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    line.forEach { t -> KChip(t, maxWidth = maxChip) }
+                }
+            }
+        }
+    ) { measurables, constraints ->
+        val loose = Constraints(maxWidth = constraints.maxWidth)
+        val placeables = measurables.map { it.measure(loose) }
+        val w = placeables.maxOfOrNull { it.width } ?: 0
+        val gapPx = gap.roundToPx()
+        val h = placeables.sumOf { it.height } +
+                gapPx * (placeables.size - 1).coerceAtLeast(0)
+        layout(w, h) {
+            var y = 0
+            placeables.forEachIndexed { i, p ->
+                val center = !alignEnd || (i > 0 && placeables.size > 1 && p.width < w)
+                val x = if (center) (w - p.width) / 2 else w - p.width
+                p.placeRelative(x, y)
+                y += p.height + gapPx
             }
         }
     }
+}
+
+fun entryTags(e: Entry): List<String> {
+    val out = mutableListOf<String>()
+    val cn = Store.vault.catName(e.cat)
+    if (cn.isNotEmpty()) out.add(cn)
+    val nt = e.note.replace('\n', ' ').trim()
+    if (nt.isNotEmpty()) out.add(nt)
+    e.fields.forEach { f ->
+        val n = f.name.trim()
+        if (n.isNotEmpty()) out.add(n)
+    }
+    return out.map { clipTag(it) }
+}
+
+fun clipTag(s: String): String {
+    var latin = true
+    for (c in s) {
+        if (c.code > 0x7F) {
+            latin = false
+            break
+        }
+    }
+    return if (latin) s.take(5) else s.take(4)
 }
 
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
@@ -1325,20 +1450,21 @@ fun EntryTile(
     onLongClick: () -> Unit = {}
 ) {
     val iconSize = when (cols) {
-        2 -> 46
-        3 -> 40
-        else -> 46
+        2 -> 28
+        3 -> 24
+        else -> 40
     }
     val shape = RoundedCornerShape(16.dp)
     Column(
         Modifier
             .fillMaxWidth()
             .clip(shape)
+
             .combinedClickable(
                 onClick = { if (checked != null) onToggle() else onClick() },
                 onLongClick = { if (checked == null) onLongClick() }
             )
-            .padding(vertical = 10.dp, horizontal = 6.dp),
+            .padding(vertical = 6.dp, horizontal = 2.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box {
@@ -1369,9 +1495,9 @@ fun EntryTile(
                 }
             }
         }
-        Spacer(Modifier.height(7.dp))
+        Spacer(Modifier.height(3.dp))
         KText(
-            (if (e.fav == 1) "★ " else "") + e.displayTitle(),
+            e.displayTitle() + (if (e.fav == 1) " ★" else ""),
             txt = Txt.Footnote1,
             weight = androidx.compose.ui.text.font.FontWeight.Medium,
             maxLines = 1,
@@ -1380,7 +1506,7 @@ fun EntryTile(
             modifier = Modifier.fillMaxWidth()
         )
         if (e.user.isNotEmpty()) {
-            Spacer(Modifier.height(2.dp))
+            Spacer(Modifier.height(1.dp))
             KText(
                 e.user,
                 txt = Txt.Footnote2,
@@ -1389,6 +1515,17 @@ fun EntryTile(
                 overflow = TextOverflow.Ellipsis,
                 align = androidx.compose.ui.text.style.TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
+            )
+        }
+        val tags = entryTags(e)
+        if (tags.isNotEmpty()) {
+            Spacer(Modifier.height(3.dp))
+            TagLines(
+                tags,
+                alignEnd = false,
+                perLine = 2,
+                maxTags = if (cols >= 3) 2 else 4,
+                maxChip = if (cols >= 3) 50.dp else 84.dp
             )
         }
     }

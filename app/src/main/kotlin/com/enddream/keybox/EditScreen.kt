@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -18,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.StarBorder
 import androidx.compose.material3.Icon
@@ -47,6 +49,7 @@ private data class FieldDraft(
 @Composable
 fun EditScreen(e: Entry, fresh: Boolean, onClose: () -> Unit) {
     val ctx = LocalContext.current
+    val ver = Store.version
     var title by remember { mutableStateOf(e.title) }
     var user by remember { mutableStateOf(e.user) }
     var pass by remember { mutableStateOf(e.pass) }
@@ -60,6 +63,7 @@ fun EditScreen(e: Entry, fresh: Boolean, onClose: () -> Unit) {
     var gen by remember { mutableStateOf(false) }
     var newCat by remember { mutableStateOf("") }
     var askDelete by remember { mutableStateOf(false) }
+    var managing by remember { mutableStateOf<com.enddream.keybox.core.Category?>(null) }
 
     val urls = remember { mutableStateListOf<String>().apply { addAll(e.urlList()) } }
     val fieldDrafts = remember {
@@ -110,6 +114,7 @@ fun EditScreen(e: Entry, fresh: Boolean, onClose: () -> Unit) {
         Column(
             Modifier
                 .fillMaxSize()
+                .imePadding()
                 .verticalScroll(rememberScrollState())
                 .padding(start = 12.dp, end = 12.dp)
                 .padding(top = LocalTopInset.current + 4.dp, bottom = 40.dp),
@@ -143,8 +148,8 @@ fun EditScreen(e: Entry, fresh: Boolean, onClose: () -> Unit) {
                     }
                 )
                 if (pass.isNotEmpty()) {
-                    Spacer(Modifier.height(2.dp))
-                    KText("强度：" + strengthLabel(pass), txt = Txt.Footnote2, color = secondaryColor())
+                    Spacer(Modifier.height(4.dp))
+                    KChip("强度：" + strengthLabel(pass))
                 }
             }
 
@@ -192,7 +197,7 @@ fun EditScreen(e: Entry, fresh: Boolean, onClose: () -> Unit) {
                     KField(
                         Store.vault.catName(cat), { }, "分类", Modifier.fillMaxWidth(),
                         readOnly = true,
-                        trailing = { Icon(Icons.Rounded.ArrowDropDown, "展开") }
+                        trailing = { Icon(Icons.Rounded.ArrowDropDown, "展开", tint = secondaryColor()) }
                     )
                     Box(Modifier.matchParentSize().clickable { catMenu = true })
                 }
@@ -240,10 +245,7 @@ fun EditScreen(e: Entry, fresh: Boolean, onClose: () -> Unit) {
                             fieldDrafts[i] = cur.copy(type = 1)
                         }, Modifier.width(66.dp))
                         KChoiceChip("开关", cur.type == 2, {
-                            fieldDrafts[i] = cur.copy(
-                                type = 2,
-                                value = if (cur.value == "1") "1" else "0"
-                            )
+                            fieldDrafts[i] = cur.copy(type = 2)
                         }, Modifier.width(66.dp))
                     }
                     Spacer(Modifier.height(8.dp))
@@ -255,7 +257,7 @@ fun EditScreen(e: Entry, fresh: Boolean, onClose: () -> Unit) {
                                 txt = Txt.Body1
                             )
                             KSwitch(cur.value == "1", { on ->
-                                fieldDrafts[i] = cur.copy(value = if (on) "1" else "0")
+                                fieldDrafts[i] = cur.copy(value = if (on) "1" else "")
                             })
                         }
                     } else {
@@ -331,7 +333,15 @@ fun EditScreen(e: Entry, fresh: Boolean, onClose: () -> Unit) {
             content = {
                 FilterRow("未分类", cat.isEmpty()) { cat = ""; catMenu = false }
                 Store.vault.cats.forEach { c ->
-                    FilterRow(c.name, cat == c.id) { cat = c.id; catMenu = false }
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.weight(1f)) {
+                            FilterRow(c.name, cat == c.id) { cat = c.id; catMenu = false }
+                        }
+                        KSmallIconButton(Icons.Rounded.Edit, "重命名或删除", {
+                            catMenu = false
+                            managing = c
+                        })
+                    }
                 }
                 Spacer(Modifier.height(6.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -349,6 +359,17 @@ fun EditScreen(e: Entry, fresh: Boolean, onClose: () -> Unit) {
                 }
             },
             buttons = { KTextButton("关闭", { catMenu = false }, Modifier.weight(1f)) }
+        )
+    }
+    managing?.let { c ->
+        CategoryManageDialog(
+            category = c,
+            onDone = { managing = null; catMenu = true },
+            onDeleted = {
+                if (cat == c.id) cat = ""
+                managing = null
+                catMenu = true
+            }
         )
     }
     if (appPicker) {

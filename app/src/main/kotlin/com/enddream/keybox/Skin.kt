@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -566,7 +567,9 @@ fun KIconButton(icon: ImageVector, desc: String, onClick: () -> Unit, modifier: 
             Icon(icon, desc, tint = MiuixTheme.colorScheme.onSurface)
         }
     } else {
-        IconButton(onClick = onClick, modifier = modifier) { Icon(icon, desc) }
+        IconButton(onClick = onClick, modifier = modifier) {
+            Icon(icon, desc, tint = MaterialTheme.colorScheme.onSurface)
+        }
     }
 }
 
@@ -620,7 +623,7 @@ fun KDivider(modifier: Modifier = Modifier, start: Dp = 0.dp) {
     if (isGlass()) {
         HorizontalDivider(
             modifier.padding(start = start),
-            color = if (glassDark()) Color.White.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.07f)
+            color = if (glassDark()) Color.White.copy(alpha = 0.22f) else Color.Black.copy(alpha = 0.18f)
         )
     } else if (isMiuix()) {
         MxDivider(modifier.padding(start = start), color = MiuixTheme.colorScheme.dividerLine.copy(alpha = 0.6f))
@@ -773,6 +776,7 @@ fun KTopBar(
                     Text(
                         title,
                         style = titleStyle,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontFamily = FontFamily.Default,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -1016,46 +1020,45 @@ fun KDialog(
 }
 
 @Composable
-fun KChip(text: String) {
-    if (isGlass()) {
-        Row(
-            Modifier
-                .clip(RoundedCornerShape(50))
-                .liquidGlass(RoundedCornerShape(50), glassThin())
-                .padding(horizontal = 9.dp, vertical = 3.dp)
-        ) {
-            Text(
-                text,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontFamily = FontFamily.Default
+fun KChip(text: String, modifier: Modifier = Modifier, maxWidth: Dp = Dp.Unspecified) {
+    val w = if (maxWidth == Dp.Unspecified) modifier else modifier.widthIn(max = maxWidth)
+    val shape = RoundedCornerShape(50)
+    val bg = when {
+        isGlass() -> glassInset()
+        isMiuix() -> MiuixTheme.colorScheme.surfaceContainerHigh
+        else -> MaterialTheme.colorScheme.surfaceContainerHighest
+    }
+    val fg = when {
+        isGlass() -> MaterialTheme.colorScheme.onSurfaceVariant
+        isMiuix() -> MiuixTheme.colorScheme.onSurfaceVariantSummary
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    Box(
+        w
+            .clip(shape)
+            .then(
+                if (isGlass()) Modifier.liquidGlass(shape, bg)
+                else Modifier.background(bg)
             )
-        }
-    } else if (isMiuix()) {
-        Row(
-            Modifier
-                .clip(RoundedCornerShape(50))
-                .background(MiuixTheme.colorScheme.surfaceContainerHigh)
-                .padding(horizontal = 9.dp, vertical = 3.dp)
-        ) {
+            .padding(horizontal = 8.dp, vertical = 2.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        if (isMiuix()) {
             MxText(
                 text,
-                style = MiuixTheme.textStyles.footnote2,
-                color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                style = MiuixTheme.textStyles.footnote2.copy(fontSize = 10.sp),
+                color = fg,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
-        }
-    } else {
-        Row(
-            Modifier
-                .clip(RoundedCornerShape(50))
-                .background(MaterialTheme.colorScheme.secondaryContainer)
-                .padding(horizontal = 9.dp, vertical = 3.dp)
-        ) {
+        } else {
             Text(
                 text,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                fontFamily = FontFamily.Default
+                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                color = fg,
+                fontFamily = FontFamily.Default,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }

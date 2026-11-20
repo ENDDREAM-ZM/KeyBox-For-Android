@@ -111,7 +111,7 @@ fun DetailDialog(e: Entry, onDismiss: () -> Unit, onEdit: () -> Unit) {
                         KSwitch(on, { v ->
                             bools[idx] = v
                             val live = Store.find(e.id) ?: e
-                            (live.fields.getOrNull(idx) ?: f).value = if (v) "1" else "0"
+                            (live.fields.getOrNull(idx) ?: f).value = if (v) "1" else ""
                             Store.save(ctx)
                         })
                     }

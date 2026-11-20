@@ -104,6 +104,13 @@ public class Vault {
         return c == null ? "" : c.name;
     }
 
+    public boolean catRename(String id, String name) {
+        Category c = catById(id);
+        if (c == null || name == null || name.trim().length() == 0) return false;
+        c.name = name.trim();
+        return true;
+    }
+
     public boolean catRemove(String id) {
         Category c = catById(id);
         if (c == null) return false;
