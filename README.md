@@ -3,33 +3,31 @@
   <a href="https://github.com/ENDDREAM-ZM/KeyBox-For-Android/releases"><img src="https://shields.io/github/downloads/ENDDREAM-ZM/KeyBox-For-Android/total?label=downloads&color=yellow" alt="Downloads" /></a>
 </p>
 
----
-
-# KeyBox For Android
+# KeyBox
 
 **English** | [中文](README.zh-CN.md)
 
-An offline password manager for Android. All data stays on your device.
+## Introduction
+
+An offline local password manager
 
 ## Features
 
-- Entries: title, username, password, URL, package name, category, tags, note, favorite
-- Custom fields: name your own fields, each one text, hidden or switch, with a copy button
-- Search, category filter, multi-select
-- List layout: one, two or three columns, remembered across launches
-- Trash with configurable retention
+- Entries: title, username, password, URL, app package name, category, tags, note, favorite
+- Custom fields: name your own fields, type text, hidden or switch, with a tap-to-copy button
+- Search, filter, multi-select, trash
 - Password and username generator
 - TOTP, added by QR scan or manually
 - Autofill service and accessibility quick fill
-- Biometric unlock, clipboard auto-clear, screenshot blocking
-- Site icons fetched from multiple sources, shared per domain
-- Three materials: Material 3, Miuix, liquid glass
+- Biometric unlock, clipboard timed clear, screenshot blocking
 
-## Security
+## Supported Versions
 
-`vault.pmv` is always encrypted. The key is derived with PBKDF2-SHA256 at 600000 iterations, then the payload goes through AES-256-CTR, AES-256-GCM and ChaCha20-Poly1305, with an outer HMAC.
+Android 9 and above, minSdk 28, targetSdk 37.
 
-Without a master password the vault is encrypted with a key held in the Android Keystore. Setting a master password switches the key to the password.
+## Download
+
+[Latest release](https://github.com/ENDDREAM-ZM/KeyBox-For-Android/releases/latest)
 
 ## Build
 
@@ -37,13 +35,13 @@ Without a master password the vault is encrypted with a key held in the Android 
 ./gradlew :app:assembleRelease
 ```
 
-Signing is read from `keystore.properties`. Without that file the build produces an unsigned APK.
+Signing is read from `keystore.properties`; without that file the build produces an unsigned APK.
 
 ## Credits
 
 - [Jetpack Compose](https://developer.android.com/jetpack/compose): UI
-- [Miuix](https://github.com/miuix-kotlin-multiplatform/miuix): Miuix skin
-- [Backdrop](https://github.com/Kyant0/AndroidLiquidGlass): liquid glass material
+- [Miuix](https://github.com/miuix-kotlin-multiplatform/miuix): Miuix material
+- [Backdrop](https://github.com/Kyant0/AndroidLiquidGlass): liquid glass
 - [CameraX](https://developer.android.com/media/camera/camerax): QR scanning
 
 ## License

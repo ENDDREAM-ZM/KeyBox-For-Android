@@ -3,33 +3,31 @@
   <a href="https://github.com/ENDDREAM-ZM/KeyBox-For-Android/releases"><img src="https://shields.io/github/downloads/ENDDREAM-ZM/KeyBox-For-Android/total?label=下载量&color=yellow" alt="下载量" /></a>
 </p>
 
----
-
-# KeyBox For Android
+# KeyBox
 
 [English](README.md) | **中文**
 
-不联网的本地密码管理器，所有数据只在设备里保存。
+## 简介
+
+一个不联网的本地密码管理器
 
 ## 功能
 
-- 条目：标题、用户名、密码、网址、包名、分类、标签、备注、收藏
-- 自定义字段：自己命名，可选文本、隐藏、开关三种类型，可加一键复制
-- 搜索、分类筛选、多选
-- 列表排列：单列、双列、三列，切换后记住
-- 回收站，保留期可设
+- 条目：标题、用户名、密码、网址、应用包名、分类、标签、备注、收藏
+- 自定义字段：可自定义字段，类型为文本、隐藏、开关，可加一键复制
+- 搜索、筛选、多选、回收站
 - 密码与用户名生成器
 - 动态令牌，扫码或手动添加
 - 自动填充服务与无障碍快速填充
 - 指纹解锁、剪贴板定时清除、禁止截图
-- 站点图标多源获取，同域名共用
-- 三套材质：Material 3、Miuix、液态玻璃
 
-## 安全
+## 支持版本
 
-`vault.pmv` 始终加密。密钥由 PBKDF2-SHA256 迭代 60 万次派生，内容依次经过 AES-256-CTR、AES-256-GCM、ChaCha20-Poly1305，最外层再做 HMAC。
+Android 9 及以上，minSdk 28，targetSdk 37。
 
-未设置主密码时用 Android Keystore 里的密钥加密，设置主密码后改用主密码。
+## 下载
+
+[最新版本](https://github.com/ENDDREAM-ZM/KeyBox-For-Android/releases/latest)
 
 ## 构建
 
@@ -37,13 +35,13 @@
 ./gradlew :app:assembleRelease
 ```
 
-签名从 `keystore.properties` 读取，没有这个文件则产出未签名包。
+签名从 `keystore.properties` 读取，缺少该文件时产出未签名包。
 
 ## 致谢
 
 - [Jetpack Compose](https://developer.android.com/jetpack/compose)：界面
-- [Miuix](https://github.com/miuix-kotlin-multiplatform/miuix)：Miuix 皮肤
-- [Backdrop](https://github.com/Kyant0/AndroidLiquidGlass)：液态玻璃材质
+- [Miuix](https://github.com/miuix-kotlin-multiplatform/miuix)：Miuix 材质
+- [Backdrop](https://github.com/Kyant0/AndroidLiquidGlass)：液态玻璃
 - [CameraX](https://developer.android.com/media/camera/camerax)：扫码
 
 ## 许可
