@@ -211,7 +211,7 @@ fun EditScreen(e: Entry, fresh: Boolean, onClose: () -> Unit) {
                 }
                 if (fieldDrafts.isEmpty()) {
                     KText(
-                        "可以自己建格子，比如「安全提问」「恢复码」「是否已开启两步验证」",
+                        "如「安全提问」「恢复码」「是否已开启两步验证」",
                         txt = Txt.Footnote2,
                         color = secondaryColor()
                     )
