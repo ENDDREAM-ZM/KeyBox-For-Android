@@ -31,11 +31,9 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Apps
@@ -981,8 +979,6 @@ fun EntryListScreen(
                     (cat.isEmpty() || (if (cat == "__none__") e.cat.isEmpty() else e.cat == cat))
         }.sortedWith(compareByDescending<Entry> { it.fav }.thenBy { it.title })
     }
-    val grid = cols > 1
-
     @Composable
     fun Body() {
         if (filtered.isEmpty()) {
@@ -993,7 +989,7 @@ fun EntryListScreen(
                     color = secondaryColor()
                 )
             }
-        } else if (grid) {
+        } else {
             LazyVerticalGrid(
                 columns = GridCells.Fixed(cols.coerceIn(1, 3)),
                 contentPadding = PaddingValues(
@@ -1015,24 +1011,6 @@ fun EntryListScreen(
                         onClick = { onClick(e) },
                         onLongClick = { onLongClick(e) }
                     )
-                }
-            }
-        } else {
-            LazyColumn(
-                contentPadding = PaddingValues(
-                    top = LocalTopInset.current + 8.dp,
-                    bottom = LocalBottomInset.current
-                )
-            ) {
-                items(filtered, key = { it.id }) { e ->
-                    EntryRow(
-                        e = e,
-                        checked = if (selecting) e.id in sel else null,
-                        onToggle = { onToggle(e.id) },
-                        onClick = { onClick(e) },
-                        onLongClick = { onLongClick(e) }
-                    )
-                    KDivider(Modifier.padding(start = if (selecting) 86.dp else 62.dp))
                 }
             }
         }
@@ -1182,7 +1160,7 @@ fun LayoutDialog(cols: Int, onPick: (Int) -> Unit, onClose: () -> Unit) {
         title = "排列方式",
         onDismiss = onClose,
         content = {
-            FilterRow("单列（图标在左）", cols == 1) { onPick(1) }
+            FilterRow("单列网格", cols == 1) { onPick(1) }
             FilterRow("双列网格", cols == 2) { onPick(2) }
             FilterRow("三列网格", cols == 3) { onPick(3) }
         },
@@ -1261,57 +1239,6 @@ fun FilterRow(text: String, selected: Boolean, onClick: () -> Unit) {
         )
         if (selected) {
             KText("✓", txt = Txt.Body1, color = accentColor())
-        }
-    }
-}
-
-@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
-@Composable
-fun EntryRow(
-    e: Entry,
-    checked: Boolean?,
-    onToggle: () -> Unit,
-    onClick: () -> Unit,
-    onLongClick: () -> Unit = {}
-) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .combinedClickable(
-                onClick = { if (checked != null) onToggle() else onClick() },
-                onLongClick = { if (checked == null) onLongClick() }
-            )
-            .padding(horizontal = 12.dp, vertical = 9.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        if (checked != null) {
-            KCheckbox(checked, { onToggle() })
-            Spacer(Modifier.width(6.dp))
-        }
-        EntryIcon(e)
-        Spacer(Modifier.width(10.dp))
-        Column(Modifier.weight(1f)) {
-            KText(
-                (if (e.fav == 1) "★ " else "") + e.displayTitle(),
-                txt = Txt.Body1,
-                weight = androidx.compose.ui.text.font.FontWeight.Medium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            KText(
-                if (e.user.isNotEmpty()) e.user else e.primaryUrl(),
-                txt = Txt.Footnote2,
-                color = secondaryColor(),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-        if (checked == null) {
-            val cn = Store.vault.catName(e.cat)
-            if (cn.isNotEmpty()) {
-                Spacer(Modifier.width(6.dp))
-                KChip(cn)
-            }
         }
     }
 }
