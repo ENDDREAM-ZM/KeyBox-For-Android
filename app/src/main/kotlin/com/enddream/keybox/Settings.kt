@@ -174,8 +174,10 @@ fun SettingsScreen(
             Column(Modifier.padding(12.dp)) {
                 KText(
                     if (hasMaster) "已设置主密码" else "未设置主密码，仅用本机密钥加密",
-                    txt = Txt.Footnote2,
-                    color = if (hasMaster) secondaryColor() else errorColor()
+                    modifier = Modifier.fillMaxWidth(),
+                    txt = Txt.Footnote1,
+                    color = if (hasMaster) secondaryColor() else errorColor(),
+                    align = androidx.compose.ui.text.style.TextAlign.Center
                 )
                 Spacer(Modifier.height(10.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {

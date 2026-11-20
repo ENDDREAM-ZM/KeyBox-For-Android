@@ -1099,7 +1099,6 @@ fun SearchRow(
                 )
             }
             Spacer(Modifier.width(2.dp))
-            KSmallIconButton(Icons.Rounded.FilterList, "筛选", onFilter)
             KSmallIconButton(
                 when (cols) {
                     2 -> Icons.Rounded.GridView
@@ -1113,6 +1112,7 @@ fun SearchRow(
                 },
                 onLayout
             )
+            KSmallIconButton(Icons.Rounded.FilterList, "筛选", onFilter)
             KSmallIconButton(
                 if (selecting) Icons.Rounded.Close else Icons.Rounded.Checklist,
                 if (selecting) "退出多选" else "多选",
