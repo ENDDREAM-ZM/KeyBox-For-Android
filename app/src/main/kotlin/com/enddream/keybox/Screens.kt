@@ -32,12 +32,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Apps
 import androidx.compose.material.icons.rounded.Casino
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Checklist
+import androidx.compose.material.icons.rounded.GridView
+import androidx.compose.material.icons.rounded.ViewAgenda
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.FilterList
@@ -553,6 +559,8 @@ fun MainScaffold(
     var q by remember(tab) { mutableStateOf("") }
     var cat by remember(tab) { mutableStateOf("") }
     var showFilter by remember { mutableStateOf(false) }
+    var showLayout by remember { mutableStateOf(false) }
+    var cols by remember { mutableStateOf(Prefs.listCols(ctx)) }
     var longPress by remember { mutableStateOf<Entry?>(null) }
 
     LaunchedEffect(Unit) {
@@ -613,7 +621,9 @@ fun MainScaffold(
                         selecting = !selecting
                         if (!selecting) sel = emptySet()
                     },
-                    onFilter = { showFilter = true }
+                    onFilter = { showFilter = true },
+                    cols = cols,
+                    onLayout = { showLayout = true }
                 )
             }
         },
@@ -698,6 +708,7 @@ fun MainScaffold(
                 list = live,
                 placeholder = "搜索",
                 emptyText = "还没有记录",
+                cols = cols,
                 selecting = selecting,
                 sel = sel,
                 onToggleSelect = { selecting = !selecting; if (!selecting) sel = emptySet() },
@@ -713,6 +724,7 @@ fun MainScaffold(
                 list = trashed,
                 placeholder = "搜索",
                 emptyText = "回收站为空",
+                cols = cols,
                 selecting = selecting,
                 sel = sel,
                 onToggleSelect = { selecting = !selecting; if (!selecting) sel = emptySet() },
@@ -784,6 +796,13 @@ fun MainScaffold(
         }
         if (showFilter) {
             CategoryFilterDialog(cat, { c -> cat = c; showFilter = false }, { showFilter = false })
+        }
+        if (showLayout) {
+            LayoutDialog(cols, {
+                cols = it
+                Prefs.setListCols(ctx, it)
+                showLayout = false
+            }, { showLayout = false })
         }
         viewing?.let { e ->
             DetailDialog(
@@ -948,6 +967,7 @@ fun EntryListScreen(
     sel: Set<String>,
     q: String,
     cat: String,
+    cols: Int,
     onToggleSelect: () -> Unit,
     onToggle: (String) -> Unit,
     onClick: (Entry) -> Unit,
@@ -956,10 +976,12 @@ fun EntryListScreen(
     val ver = Store.version
     val filtered = remember(list, q, cat, key, ver) {
         list.filter { e ->
-            (q.isEmpty() || (e.title + e.user + e.primaryUrl() + e.tags + e.pass).contains(q, true)) &&
+            (q.isEmpty() || (e.title + e.user + e.primaryUrl() + e.tags + e.pass
+                    + e.fields.joinToString(" ") { f -> f.name + " " + f.value }).contains(q, true)) &&
                     (cat.isEmpty() || (if (cat == "__none__") e.cat.isEmpty() else e.cat == cat))
         }.sortedWith(compareByDescending<Entry> { it.fav }.thenBy { it.title })
     }
+    val grid = cols > 1
 
     @Composable
     fun Body() {
@@ -970,6 +992,30 @@ fun EntryListScreen(
                     txt = Txt.Body2,
                     color = secondaryColor()
                 )
+            }
+        } else if (grid) {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(cols.coerceIn(1, 3)),
+                contentPadding = PaddingValues(
+                    start = 8.dp,
+                    end = 8.dp,
+                    top = LocalTopInset.current + 8.dp,
+                    bottom = LocalBottomInset.current
+                ),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                items(filtered.size, key = { filtered[it].id }) { i ->
+                    val e = filtered[i]
+                    EntryTile(
+                        e = e,
+                        checked = if (selecting) e.id in sel else null,
+                        cols = cols,
+                        onToggle = { onToggle(e.id) },
+                        onClick = { onClick(e) },
+                        onLongClick = { onLongClick(e) }
+                    )
+                }
             }
         } else {
             LazyColumn(
@@ -1006,7 +1052,9 @@ fun SearchRow(
     placeholder: String,
     selecting: Boolean,
     onToggleSelect: () -> Unit,
-    onFilter: () -> Unit
+    onFilter: () -> Unit,
+    cols: Int,
+    onLayout: () -> Unit
 ) {
     KBarSurface {
         Row(
@@ -1052,6 +1100,19 @@ fun SearchRow(
             }
             Spacer(Modifier.width(2.dp))
             KSmallIconButton(Icons.Rounded.FilterList, "筛选", onFilter)
+            KSmallIconButton(
+                when (cols) {
+                    2 -> Icons.Rounded.GridView
+                    3 -> Icons.Rounded.Apps
+                    else -> Icons.Rounded.ViewAgenda
+                },
+                when (cols) {
+                    2 -> "双列"
+                    3 -> "三列"
+                    else -> "单列"
+                },
+                onLayout
+            )
             KSmallIconButton(
                 if (selecting) Icons.Rounded.Close else Icons.Rounded.Checklist,
                 if (selecting) "退出多选" else "多选",
@@ -1110,6 +1171,20 @@ fun CategoryFilterDialog(cat: String, onPick: (String) -> Unit, onClose: () -> U
             FilterRow("全部", cat.isEmpty()) { onPick("") }
             FilterRow("未分类", cat == "__none__") { onPick("__none__") }
             Store.vault.cats.forEach { c -> FilterRow(c.name, cat == c.id) { onPick(c.id) } }
+        },
+        buttons = { KTextButton("关闭", onClose, Modifier.weight(1f)) }
+    )
+}
+
+@Composable
+fun LayoutDialog(cols: Int, onPick: (Int) -> Unit, onClose: () -> Unit) {
+    KDialog(
+        title = "排列方式",
+        onDismiss = onClose,
+        content = {
+            FilterRow("单列（图标在左）", cols == 1) { onPick(1) }
+            FilterRow("双列网格", cols == 2) { onPick(2) }
+            FilterRow("三列网格", cols == 3) { onPick(3) }
         },
         buttons = { KTextButton("关闭", onClose, Modifier.weight(1f)) }
     )
@@ -1241,11 +1316,90 @@ fun EntryRow(
     }
 }
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+@Composable
+fun EntryTile(
+    e: Entry,
+    checked: Boolean?,
+    cols: Int,
+    onToggle: () -> Unit,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit = {}
+) {
+    val iconSize = when (cols) {
+        2 -> 46
+        3 -> 40
+        else -> 46
+    }
+    val shape = RoundedCornerShape(16.dp)
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .combinedClickable(
+                onClick = { if (checked != null) onToggle() else onClick() },
+                onLongClick = { if (checked == null) onLongClick() }
+            )
+            .padding(vertical = 10.dp, horizontal = 6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box {
+            EntryIcon(e, iconSize)
+            if (checked != null) {
+                Box(
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .offset(x = 5.dp, y = (-5).dp)
+                        .size(20.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (checked) accentColor()
+                            else if (isGlass()) glassSurfaceStrong() else MaterialTheme.colorScheme.surface
+                        )
+                        .then(
+                            if (checked) Modifier
+                            else Modifier.border(1.5.dp, secondaryColor().copy(alpha = 0.6f), CircleShape)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (checked) Icon(
+                        Icons.Rounded.Check,
+                        "已选",
+                        Modifier.size(13.dp),
+                        tint = Color.White
+                    )
+                }
+            }
+        }
+        Spacer(Modifier.height(7.dp))
+        KText(
+            (if (e.fav == 1) "★ " else "") + e.displayTitle(),
+            txt = Txt.Footnote1,
+            weight = androidx.compose.ui.text.font.FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            align = androidx.compose.ui.text.style.TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
+        )
+        if (e.user.isNotEmpty()) {
+            Spacer(Modifier.height(2.dp))
+            KText(
+                e.user,
+                txt = Txt.Footnote2,
+                color = secondaryColor(),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                align = androidx.compose.ui.text.style.TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
 object ChromeState {
     var floatingTop by mutableStateOf(true)
     var floating by mutableStateOf(true)
 }
-
 object BannerState {
     var visible by mutableStateOf(false)
     var dismissed by mutableStateOf(false)

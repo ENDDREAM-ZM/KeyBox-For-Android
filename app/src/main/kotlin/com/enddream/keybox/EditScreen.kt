@@ -36,6 +36,14 @@ import androidx.compose.ui.unit.dp
 import com.enddream.keybox.core.Entry
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
+private data class FieldDraft(
+    val name: String = "",
+    val type: Int = 0,
+    val value: String = "",
+    val copy: Boolean = true,
+    val reveal: Boolean = false
+)
+
 @Composable
 fun EditScreen(e: Entry, fresh: Boolean, onClose: () -> Unit) {
     val ctx = LocalContext.current
@@ -54,6 +62,11 @@ fun EditScreen(e: Entry, fresh: Boolean, onClose: () -> Unit) {
     var askDelete by remember { mutableStateOf(false) }
 
     val urls = remember { mutableStateListOf<String>().apply { addAll(e.urlList()) } }
+    val fieldDrafts = remember {
+        mutableStateListOf<FieldDraft>().apply {
+            e.fields.forEach { add(FieldDraft(it.name, it.type, it.value, it.copy == 1)) }
+        }
+    }
 
     fun save() {
         e.title = title
@@ -65,6 +78,10 @@ fun EditScreen(e: Entry, fresh: Boolean, onClose: () -> Unit) {
         e.fav = if (fav) 1 else 0
         e.urls = urls.filter { it.isNotBlank() }.map { it.trim() }.toMutableList()
         e.url = e.urls.firstOrNull() ?: ""
+        e.fields = fieldDrafts
+            .filter { it.name.isNotBlank() }
+            .map { Entry.Field(it.name.trim(), it.type, it.value, if (it.copy) 1 else 0) }
+            .toMutableList()
         e.utime = System.currentTimeMillis()
         val live = Store.find(e.id)
         if (live == null) {
@@ -73,6 +90,7 @@ fun EditScreen(e: Entry, fresh: Boolean, onClose: () -> Unit) {
             live.title = e.title; live.user = e.user; live.pass = e.pass
             live.note = e.note; live.pkg = e.pkg; live.cat = e.cat
             live.fav = e.fav; live.url = e.url; live.urls = e.urls; live.utime = e.utime
+            live.fields = e.fields
         }
         Store.save(ctx)
         onClose()
@@ -182,6 +200,87 @@ fun EditScreen(e: Entry, fresh: Boolean, onClose: () -> Unit) {
 
             KCard(padding = 12.dp) {
                 KField(note, { note = it }, "备注", Modifier.fillMaxWidth(), singleLine = false, minLines = 3)
+            }
+
+            KCard(padding = 12.dp) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    KText("自定义字段", modifier = Modifier.weight(1f), txt = Txt.Body2)
+                    KTextButton("添加字段", {
+                        fieldDrafts.add(FieldDraft(type = 0, copy = true))
+                    })
+                }
+                if (fieldDrafts.isEmpty()) {
+                    KText(
+                        "可以自己建格子，比如「安全提问」「恢复码」「是否已开启两步验证」",
+                        txt = Txt.Footnote2,
+                        color = secondaryColor()
+                    )
+                }
+                fieldDrafts.forEachIndexed { i, f ->
+                    val cur = f
+                    if (i > 0) {
+                        Spacer(Modifier.height(8.dp))
+                        KDivider(Modifier.padding(bottom = 8.dp))
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        KField(
+                            cur.name,
+                            { v -> fieldDrafts[i] = cur.copy(name = v) },
+                            "字段名称",
+                            Modifier.weight(1f)
+                        )
+                        KIconButton(Icons.Rounded.Close, "删除字段", { fieldDrafts.removeAt(i) })
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        KChoiceChip("文本", cur.type == 0, {
+                            fieldDrafts[i] = cur.copy(type = 0)
+                        }, Modifier.width(66.dp))
+                        KChoiceChip("隐藏", cur.type == 1, {
+                            fieldDrafts[i] = cur.copy(type = 1)
+                        }, Modifier.width(66.dp))
+                        KChoiceChip("开关", cur.type == 2, {
+                            fieldDrafts[i] = cur.copy(
+                                type = 2,
+                                value = if (cur.value == "1") "1" else "0"
+                            )
+                        }, Modifier.width(66.dp))
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    if (cur.type == 2) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            KText(
+                                if (cur.value == "1") "已开启" else "未开启",
+                                modifier = Modifier.weight(1f),
+                                txt = Txt.Body1
+                            )
+                            KSwitch(cur.value == "1", { on ->
+                                fieldDrafts[i] = cur.copy(value = if (on) "1" else "0")
+                            })
+                        }
+                    } else {
+                        KField(
+                            cur.value,
+                            { v -> fieldDrafts[i] = cur.copy(value = v) },
+                            if (cur.type == 1) "隐藏内容，如恢复码" else "字段内容",
+                            Modifier.fillMaxWidth(),
+                            password = cur.type == 1 && !cur.reveal,
+                            trailing = if (cur.type == 1) {
+                                {
+                                    KTextButton(if (cur.reveal) "隐藏" else "显示", {
+                                        fieldDrafts[i] = cur.copy(reveal = !cur.reveal)
+                                    })
+                                }
+                            } else null
+                        )
+                    }
+                    if (cur.type != 2) {
+                        Spacer(Modifier.height(4.dp))
+                        KCheckboxRow("显示一键复制按钮", cur.copy) { on ->
+                            fieldDrafts[i] = cur.copy(copy = on)
+                        }
+                    }
+                }
             }
 
             if (!fresh) {

@@ -119,7 +119,8 @@ public class Vault {
             if (e.del == 1) continue;
             if (n.length() == 0 || contains(e.title, n) || contains(e.user, n)
                     || contains(e.url, n) || contains(e.note, n) || contains(e.tags, n)
-                    || contains(e.pass, n) || contains(catName(e.cat), n)) {
+                    || contains(e.pass, n) || contains(catName(e.cat), n)
+                    || containsFields(e.fields, n)) {
                 r.add(e);
             }
         }
@@ -134,6 +135,13 @@ public class Vault {
 
     private static boolean contains(String hay, String lowerNeedle) {
         return hay != null && hay.toLowerCase().contains(lowerNeedle);
+    }
+
+    private static boolean containsFields(List<Entry.Field> fields, String lowerNeedle) {
+        for (Entry.Field f : fields) {
+            if (contains(f.name, lowerNeedle) || contains(f.value, lowerNeedle)) return true;
+        }
+        return false;
     }
 
     public static int strength(String pass) {

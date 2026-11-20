@@ -23,6 +23,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -39,6 +41,8 @@ fun DetailDialog(e: Entry, onDismiss: () -> Unit, onEdit: () -> Unit) {
     val ctx = LocalContext.current
     var showPw by remember { mutableStateOf(false) }
     var fav by remember { mutableStateOf(e.fav == 1) }
+    val revealed = remember { mutableStateListOf<String>() }
+    val bools = remember { mutableStateMapOf<Int, Boolean>() }
     val urls = e.urlList()
 
     KDialog(
@@ -93,6 +97,59 @@ fun DetailDialog(e: Entry, onDismiss: () -> Unit, onEdit: () -> Unit) {
             InfoRow("分类", Store.vault.catName(e.cat)) { }
             if (e.tags.isNotEmpty()) InfoRow("标签", e.tags) { }
             InfoRow("备注", e.note) { copyText(ctx, e.note) }
+            e.fields.forEachIndexed { idx, f ->
+                when (f.type) {
+                    2 -> Row(
+                        Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val on = bools[idx] ?: f.on()
+                        Column(Modifier.weight(1f)) {
+                            KText(f.name, txt = Txt.Footnote2, color = secondaryColor())
+                            KText(if (on) "已开启" else "未开启", txt = Txt.Body1)
+                        }
+                        KSwitch(on, { v ->
+                            bools[idx] = v
+                            val live = Store.find(e.id) ?: e
+                            (live.fields.getOrNull(idx) ?: f).value = if (v) "1" else "0"
+                            Store.save(ctx)
+                        })
+                    }
+                    1 -> {
+                        val open = f.name in revealed
+                        Row(
+                            Modifier.fillMaxWidth().padding(top = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            KText(f.name, modifier = Modifier.weight(1f), txt = Txt.Footnote2, color = secondaryColor())
+                            KTextButton(if (open) "隐藏" else "显示", {
+                                if (open) revealed.remove(f.name) else revealed.add(f.name)
+                            })
+                            if (f.copy == 1) {
+                                KIconButton(Icons.Rounded.ContentCopy, "复制", { copyText(ctx, f.value) })
+                            }
+                        }
+                        KText(
+                            if (open) f.value else "•".repeat(f.value.length.coerceAtLeast(1)),
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
+                            txt = Txt.Body1,
+                            mono = true
+                        )
+                    }
+                    else -> Row(
+                        Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            KText(f.name, txt = Txt.Footnote2, color = secondaryColor())
+                            KText(nz(f.value), txt = Txt.Body1)
+                        }
+                        if (f.copy == 1) {
+                            KIconButton(Icons.Rounded.ContentCopy, "复制", { copyText(ctx, f.value) })
+                        }
+                    }
+                }
+            }
             InfoRow("密码强度", strengthLabel(e.pass)) { }
         },
         buttons = {

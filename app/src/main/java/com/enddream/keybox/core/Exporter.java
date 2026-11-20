@@ -48,22 +48,27 @@ public final class Exporter {
             b.append(',');
             csvField(b, e.pass);
             b.append(',');
-            csvField(b, joinNote(e.note, v.catName(e.cat), e.tags));
+            csvField(b, joinNote(e, v.catName(e.cat)));
             b.append("\r\n");
         }
         return b.toString();
     }
 
-    private static String joinNote(String note, String cat, String tags) {
+    private static String joinNote(Entry e, String cat) {
         StringBuilder b = new StringBuilder();
-        if (note != null) b.append(note);
+        if (e.note != null) b.append(e.note);
         if (cat != null && cat.length() > 0) {
             if (b.length() > 0) b.append('\n');
             b.append("分类: ").append(cat);
         }
-        if (tags != null && tags.length() > 0) {
+        if (e.tags != null && e.tags.length() > 0) {
             if (b.length() > 0) b.append('\n');
-            b.append("标签: ").append(tags);
+            b.append("标签: ").append(e.tags);
+        }
+        for (Entry.Field f : e.fields) {
+            if (f.name == null || f.name.length() == 0) continue;
+            if (b.length() > 0) b.append('\n');
+            b.append(f.name).append(": ").append(f.text());
         }
         return b.toString();
     }
@@ -109,6 +114,13 @@ public final class Exporter {
                 if (fld.length() > 0) fld.append(", ");
                 fld.append("{\"name\": \"pkg\", \"value\": ").append(Json.quote(e.pkg))
                         .append(", \"type\": 0}");
+            }
+            for (Entry.Field f : e.fields) {
+                if (f.name == null || f.name.length() == 0) continue;
+                if (fld.length() > 0) fld.append(", ");
+                fld.append("{\"name\": ").append(Json.quote(f.name))
+                        .append(", \"value\": ").append(Json.quote(f.type == 2 ? (f.on() ? "true" : "false") : f.value))
+                        .append(", \"type\": ").append(f.type == 2 ? 2 : f.type == 1 ? 1 : 0).append('}');
             }
             if (fld.length() > 0) b.append(", \"fields\": [").append(fld).append(']');
             if (e.pkg != null && e.pkg.length() > 0) {
@@ -258,19 +270,22 @@ public final class Exporter {
             }
             List<Object> fields = Json.asList(m.get("fields"));
             if (fields != null) {
-                StringBuilder extra = new StringBuilder();
                 for (Object fo : fields) {
                     Map<String, Object> fm = Json.asObj(fo);
                     if (fm == null) continue;
                     String fn = Json.getStr(fm, "name", "");
                     String fv = Json.getStr(fm, "value", "");
+                    if (fn.length() == 0) continue;
+                    if (fn.equalsIgnoreCase("tags")) {
+                        if (empty(e.tags)) e.tags = fv;
+                        continue;
+                    }
+                    if (fn.equalsIgnoreCase("pkg") || fn.equalsIgnoreCase("app")) continue;
                     if (fv.length() == 0) continue;
-                    if (fn.equalsIgnoreCase("tags") && empty(e.tags)) e.tags = fv;
-                    else extra.append(fn).append(": ").append(fv).append('\n');
-                }
-                if (extra.length() > 0) {
-                    if (!empty(e.note)) e.note = e.note + "\n";
-                    e.note = (e.note == null ? "" : e.note) + extra.toString().trim();
+                    int ft = (int) Json.getNum(fm, "type", 0);
+                    if (ft == 2) fv = ("true".equalsIgnoreCase(fv) || "1".equals(fv) || "是".equals(fv)) ? "1" : "0";
+                    else if (ft != 1) ft = 0;
+                    e.fields.add(new Entry.Field(fn, ft, fv, 1));
                 }
             }
             if (empty(e.pkg)) {

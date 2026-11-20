@@ -14,7 +14,9 @@ An offline password manager for Android. All data stays on your device.
 ## Features
 
 - Entries: title, username, password, URL, package name, category, tags, note, favorite
+- Custom fields: name your own fields, each one text, hidden or switch, with a copy button
 - Search, category filter, multi-select
+- List layout: one, two or three columns, remembered across launches
 - Trash with configurable retention
 - Password and username generator
 - TOTP, added by QR scan or manually

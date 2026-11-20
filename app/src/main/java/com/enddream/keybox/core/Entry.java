@@ -13,11 +13,61 @@ public class Entry {
     public String tags = "";
     public String cat = "";
     public String pkg = "";
+    public java.util.List<Field> fields = new java.util.ArrayList<>();
     public int fav;
     public int del;
     public long ctime;
     public long utime;
     public long dtime;
+
+    public static class Field {
+        public String name = "";
+        public int type;
+        public String value = "";
+        public int copy;
+
+        public Field() {}
+
+        public Field(String name, int type, String value, int copy) {
+            this.name = name == null ? "" : name;
+            this.type = type;
+            this.value = value == null ? "" : value;
+            this.copy = copy;
+        }
+
+        public boolean on() {
+            return "1".equals(value);
+        }
+
+        public String text() {
+            return type == 2 ? (on() ? "是" : "否") : value;
+        }
+
+        public String toJson() {
+            StringBuilder b = new StringBuilder(64);
+            b.append("{\"name\":").append(Json.quote(name));
+            b.append(",\"type\":").append(type);
+            b.append(",\"value\":").append(Json.quote(value));
+            b.append(",\"copy\":").append(copy);
+            b.append('}');
+            return b.toString();
+        }
+
+        public static Field fromJson(Object o) {
+            Map<String, Object> m = Json.asObj(o);
+            if (m == null) return null;
+            Field f = new Field();
+            f.name = Json.getStr(m, "name", "");
+            f.type = (int) Json.getNum(m, "type", 0);
+            f.value = Json.getStr(m, "value", "");
+            f.copy = (int) Json.getNum(m, "copy", 0);
+            return f;
+        }
+
+        public Field copy() {
+            return new Field(name, type, value, copy);
+        }
+    }
 
     public Entry() {}
 
@@ -73,6 +123,14 @@ public class Entry {
         b.append(",\"tags\":").append(Json.quote(tags));
         b.append(",\"cat\":").append(Json.quote(cat));
         b.append(",\"pkg\":").append(Json.quote(pkg));
+        if (!fields.isEmpty()) {
+            b.append(",\"fields\":[");
+            for (int i = 0; i < fields.size(); i++) {
+                if (i > 0) b.append(',');
+                b.append(fields.get(i).toJson());
+            }
+            b.append(']');
+        }
         b.append(",\"fav\":").append(fav);
         b.append(",\"ctime\":").append(ctime);
         b.append(",\"utime\":").append(utime);
@@ -103,6 +161,13 @@ public class Entry {
         e.tags = Json.getStr(m, "tags", "");
         e.cat = Json.getStr(m, "cat", "");
         e.pkg = Json.getStr(m, "pkg", "");
+        java.util.List<Object> fs = Json.asList(m.get("fields"));
+        if (fs != null) {
+            for (Object fo : fs) {
+                Field f = Field.fromJson(fo);
+                if (f != null && f.name.trim().length() > 0) e.fields.add(f);
+            }
+        }
         e.fav = (int) Json.getNum(m, "fav", 0);
         e.del = (int) Json.getNum(m, "del", 0);
         e.ctime = Json.getNum(m, "ctime", 0);
@@ -123,6 +188,8 @@ public class Entry {
         e.tags = tags;
         e.cat = cat;
         e.pkg = pkg;
+        e.fields = new java.util.ArrayList<>();
+        for (Field f : fields) e.fields.add(f.copy());
         e.fav = fav;
         e.del = del;
         e.ctime = ctime;

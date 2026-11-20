@@ -61,4 +61,11 @@ object Prefs {
 
     fun bannerOff(c: Context) = get(c).getBoolean("banner_off", false)
     fun setBannerOff(c: Context, v: Boolean) = get(c).edit().putBoolean("banner_off", v).apply()
+
+    fun listCols(c: Context): Int {
+        val v = get(c).getInt("list_cols", 1)
+        return if (v == 1 || v == 2 || v == 3) v else 1
+    }
+
+    fun setListCols(c: Context, v: Int) = get(c).edit().putInt("list_cols", v).apply()
 }
